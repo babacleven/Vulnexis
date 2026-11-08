@@ -1,0 +1,6 @@
+{
+  "name": "Kortex Defender",
+  "description": "Plateforme d'audit de sécurité web & API, détection de vulnérabilités et rapports détaillés.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
