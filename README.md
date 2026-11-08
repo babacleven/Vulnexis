@@ -110,44 +110,48 @@ L'application repose sur une architecture **Full-Stack intégrée** avec Vite et
 
 ---
 
-## 📁 Structure du Projet
+## 📁 Structure du Projet (Séparation Frontend & Backend)
+
+Le projet adopte une **Architecture Monorepo Découplée** avec deux répertoires étanches :
 
 ```text
 ├── index.html                 # Point d'entrée HTML principal (SEO & Google Fonts)
 ├── metadata.json              # Métadonnées et permissions de l'application
 ├── package.json               # Dépendances et scripts npm
-├── server.ts                  # Serveur Express backend & moteur d'API Kortex
+├── server.ts                  # Orchestrateur racine Express (Port 3000) & pont Vite
 ├── tsconfig.json              # Configuration TypeScript
-├── vite.config.ts             # Configuration du bundler Vite avec Tailwind CSS
+├── vite.config.ts             # Configuration du bundler Vite avec Tailwind CSS v4
 ├── ISSUES.md                  # Backlog des 16 issues pour le déploiement réel
 ├── README.md                  # Documentation complète du projet
+├── GUIDE_PROJET.md            # Guide explicatif détaillé d'architecture et de fonctionnement
 ├── public/                    # Fichiers statiques et logos
 │   └── kortex-logo.svg        # Logo vectoriel officiel Kortex Defender
-└── src/                       # Code source frontend React
-    ├── App.tsx                # Routeur principal et gestionnaire de session
-    ├── main.tsx               # Point d'entrée React 19
-    ├── index.css              # Feuille de style globale Tailwind CSS v4
-    ├── types.ts               # Définitions TypeScript (User, Target, Scan, Finding...)
-    ├── components/            # Composants partagés
-    │   ├── AppLayout.tsx      # Sidebar, en-tête avec solde et menu de navigation
-    │   └── Icons.tsx          # Bibliothèque d'icônes SVG officielles
-    ├── context/               # Contexte d'état global
-    │   └── AuthContext.tsx    # Gestion de session, authentification et solde crédits
-    └── pages/                 # Vues applicatives
-        ├── LandingPage.tsx    # Page d'accueil publique avec simulateur d'audit
-        ├── AuthPage.tsx       # Pages Connexion, Inscription et validation OTP
-        ├── DashboardPage.tsx  # Vue d'ensemble (métriques, guide de démarrage, scans)
-        ├── TargetsPage.tsx    # Gestion et ajout d'applications autorisées
-        ├── TargetDetailPage.tsx # Détail d'une application et historique de ses scans
-        ├── ScansPage.tsx      # Liste des audits avec filtres de statut et cible
-        ├── NewScanPage.tsx    # Configuration et lancement d'un nouveau scan
-        ├── ScanDetailPage.tsx # Rapport détaillé d'audit (failles, preuves, logs)
-        ├── CreditsPage.tsx    # Solde, coupons KX, packs FCFA et historique
-        ├── AgentPage.tsx      # Présentation de l'Agent Kortex (offre Premium)
-        ├── ParrainagePage.tsx # Formulaire d'affiliation Mobile Money
-        ├── SettingsPage.tsx   # Informations et profil du compte utilisateur
-        └── TermsPage.tsx      # Conditions Générales d'Utilisation juridiques
+│
+├── frontend/                  # [APPLICATION REACT SPA]
+│   ├── App.tsx                # Routeur principal et gestionnaire de session
+│   ├── main.tsx               # Point d'entrée React 19
+│   ├── index.css              # Feuille de style globale Tailwind CSS v4
+│   ├── types.ts               # Définitions TypeScript (User, Target, Scan, Finding...)
+│   ├── components/            # Composants partagés (AppLayout, Icons...)
+│   ├── context/               # Contexte d'état global (AuthContext...)
+│   └── pages/                 # Les 13 vues applicatives (Dashboard, Scans, Targets...)
+│
+└── backend/                   # [API & MOTEURS NODE.JS / EXPRESS]
+    ├── app.ts                 # Factory Express avec enregistrement des 5 routeurs
+    ├── db.ts                  # Store de données en mémoire (prêt pour PostgreSQL)
+    ├── types.ts               # Modèles de données (DBUser, DBTarget, DBScan...)
+    ├── routes/                # Contrôleurs API REST découpés par domaine
+    │   ├── auth.routes.ts     # Inscription, connexion, OTP WhatsApp
+    │   ├── targets.routes.ts  # Gestion des cibles et attestations
+    │   ├── scans.routes.ts    # Lancement, suivi et rapports d'audits
+    │   ├── credits.routes.ts  # Solde, coupons KX et historique
+    │   └── misc.routes.ts     # Profil, notifications, parrainage
+    └── services/              # Moteurs de calcul et d'analyse
+        ├── scanner.ts         # Orchestrateur asynchrone des scans
+        └── real-engine.ts     # Moteur réseau réel (DNS, TLS, Headers, CVSS)
 ```
+
+> 📖 **Pour une explication approfondie de l'architecture et du fonctionnement interne de chaque composant, consultez le guide complet : [`GUIDE_PROJET.md`](./GUIDE_PROJET.md)**.
 
 ---
 
