@@ -6,10 +6,26 @@ export function ParrainagePage({ onNavigate }: { onNavigate?: (path: string) => 
   const [operator, setOperator] = useState('Wave');
   const [phone, setPhone] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    fetch('/api/k/referrals/me')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.data?.request) {
+          setPromoCode(data.data.request.promoCode || '');
+          setFullName(data.data.request.fullName || '');
+          setOperator(data.data.request.operator || 'Wave');
+          setPhone(data.data.request.phone || '');
+          setSubmitted(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!promoCode.trim()) {
@@ -28,7 +44,27 @@ export function ParrainagePage({ onNavigate }: { onNavigate?: (path: string) => 
       setError('Vous devez accepter les conditions du programme.');
       return;
     }
-    setSubmitted(true);
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/k/referrals/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          promoCode: promoCode.trim().toUpperCase(),
+          fullName: fullName.trim(),
+          operator,
+          phone: phone.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.msg || 'Erreur lors de l’envoi.');
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || 'Erreur inconnue.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { executeRealAudit } from './src/scanner/engine.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +13,17 @@ const PORT = 3000;
 
 app.use(express.json());
 app.use(cookieParser());
+
+interface DBReferralRequest {
+  id: string;
+  userId: string;
+  promoCode: string;
+  fullName: string;
+  operator: string;
+  phone: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
 
 // In-memory Database with initial state matching reference live account
 interface DBUser {
@@ -116,6 +128,7 @@ const DB = {
   ] as DBUser[],
   targets: [] as DBTarget[],
   scans: [] as DBScan[],
+  referrals: [] as DBReferralRequest[],
   transactions: [
     {
       id: 24,
@@ -353,8 +366,11 @@ app.post('/api/k/credits/redeem', requireAuth, (req: Request, res: Response) => 
 
   const clean = code.trim().toUpperCase();
   let creditsToAdd = 10;
-  if (clean.includes('50') || clean === 'PREMIUM') creditsToAdd = 50;
-  else if (clean.includes('20')) creditsToAdd = 20;
+  if (clean === 'PREMIUM' || clean.includes('PREMIUM')) creditsToAdd = 60;
+  else if (clean === 'AFRICA-SEC' || clean.includes('AFRICA')) creditsToAdd = 25;
+  else if (clean === 'KORTEX2026' || clean.includes('2026')) creditsToAdd = 20;
+  else if (clean === 'DEFENDER-CI' || clean.includes('DEFENDER')) creditsToAdd = 15;
+  else if (clean.startsWith('KX-')) creditsToAdd = 10;
 
   user.credits += creditsToAdd;
 
@@ -558,8 +574,8 @@ app.post('/api/k/scans', requireAuth, (req: Request, res: Response) => {
   DB.scans.unshift(newScan);
   target.scans_count += 1;
 
-  // Simulate automated realistic progression
-  simulateScanProgress(newScan, target, user);
+  // Execute real network & application security audit
+  startRealScanExecution(newScan, target, user);
 
   return res.json({ code: 200, msg: 'Scan démarré avec succès', data: newScan });
 });
@@ -705,122 +721,103 @@ app.post('/api/k/notifications/:id/read', requireAuth, (req: Request, res: Respo
   return res.json({ code: 200, msg: 'Notification marquée comme lue' });
 });
 
-// Automated scanner simulator
-function simulateScanProgress(scan: DBScan, target: DBTarget, user: DBUser) {
-  const stages = [
-    { progress: 35, phase: 'Cartographie', log: 'Découverte des services et sous-domaines' },
-    { progress: 65, phase: 'Reconnaissance & scan', log: 'Analyse des en-têtes de sécurité, ports, SSL/TLS et CVE' },
-    { progress: 85, phase: 'Validation contrôlée', log: 'Corrélation et vérification des faux-positifs' },
-    { progress: 100, phase: 'Terminé', log: 'Scan complété. Rapport de sécurité finalisé.' },
-  ];
+// Real Network & Application Security Audit Runner
+async function startRealScanExecution(scan: DBScan, target: DBTarget, user: DBUser) {
+  try {
+    scan.progress = 15;
+    scan.phase = 'Initialisation';
+    scan.log_lines = [
+      `${new Date().toLocaleTimeString('fr-FR')} - Démarrage de l'audit réel sur ${target.url} (${scan.profile.toUpperCase()})`,
+    ];
 
-  let step = 0;
-  const interval = setInterval(() => {
-    if (step < stages.length) {
-      const s = stages[step];
-      scan.progress = s.progress;
-      scan.phase = s.phase;
-      scan.log_lines.push(`${new Date().toLocaleTimeString()} - ${s.log}`);
-
-      if (scan.progress === 100) {
-        scan.status = 'completed';
-        scan.completed_at = new Date().toISOString();
-        scan.duration_seconds = 18;
-
-        // Populate findings
-        const findings: DBFinding[] = [
-          {
-            id: `fnd_${Date.now()}_1`,
-            title: 'En-tête Strict-Transport-Security (HSTS) absent',
-            severity: 'medium',
-            category: 'Chiffrement & SSL/TLS',
-            cvss: 5.4,
-            description: "Le serveur n'impose pas l'utilisation de HTTPS via l'en-tête HSTS, ce qui permet des attaques par rétrogradation de protocole (SSL stripping).",
-            remediation: "Ajoutez l'en-tête 'Strict-Transport-Security: max-age=31536000; includeSubDomains; preload' sur votre reverse proxy ou serveur web.",
-            proof: "Port 443 - Header Strict-Transport-Security manquant",
-            url: target.url,
-          },
-          {
-            id: `fnd_${Date.now()}_2`,
-            title: 'Content-Security-Policy non configurée',
-            severity: 'high',
-            category: 'En-têtes HTTP de sécurité',
-            cvss: 7.2,
-            description: "Absence de directive CSP pour restreindre le chargement de scripts externes et limiter l'impact des vulnérabilités Cross-Site Scripting (XSS).",
-            remediation: "Déployez une CSP stricte avec nonces ou restrictions de domaines autorisés.",
-            proof: "Header Content-Security-Policy non retourné",
-            url: target.url,
-          },
-          {
-            id: `fnd_${Date.now()}_3`,
-            title: 'Protection X-Content-Type-Options absente',
-            severity: 'low',
-            category: 'Configuration HTTP',
-            cvss: 3.5,
-            description: "Les navigateurs peuvent effectuer du MIME-type sniffing et exécuter des fichiers texte ou images en tant que code malveillant.",
-            remediation: "Définissez 'X-Content-Type-Options: nosniff'.",
-            proof: "X-Content-Type-Options absent",
-            url: target.url,
-          },
-          {
-            id: `fnd_${Date.now()}_4`,
-            title: 'Version du serveur exposée',
-            severity: 'low',
-            category: 'Divulgation d’informations',
-            cvss: 2.8,
-            description: "Le serveur transmet sa version exacte dans l'en-tête Server, facilitant le ciblage de vulnérabilités connues.",
-            remediation: "Désactivez les signatures du serveur web (ServerTokens Prod sous Apache, server_tokens off sous Nginx).",
-            proof: "Server: nginx/1.24.0",
-            url: target.url,
-          },
-        ];
-
-        if (scan.profile === 'deep') {
-          findings.unshift({
-            id: `fnd_${Date.now()}_0`,
-            title: 'Endpoints d’administration ou de documentation Swagger/OpenAPI exposés publiquement',
-            severity: 'critical',
-            category: 'Contrôle d’accès',
-            cvss: 9.1,
-            description: "L'interface Swagger/OpenAPI ou des routes d'administration sont accessibles sans authentification préalable.",
-            remediation: "Restreignez l'accès à ces endpoints par IP ou exigez une authentification administrateur.",
-            proof: "HTTP 200 sur /api/docs et /swagger-ui.html",
-            url: `${target.url}/api/docs`,
-          });
+    const result = await executeRealAudit(
+      target.url,
+      scan.profile,
+      (prog, phase, log) => {
+        scan.progress = prog;
+        scan.phase = phase;
+        if (!scan.log_lines.includes(log)) {
+          scan.log_lines.push(log);
         }
-
-        scan.findings = findings;
-        scan.counts = {
-          critical: findings.filter(f => f.severity === 'critical').length,
-          high: findings.filter(f => f.severity === 'high').length,
-          medium: findings.filter(f => f.severity === 'medium').length,
-          low: findings.filter(f => f.severity === 'low').length,
-          info: 1,
-        };
-
-        const penalties = scan.counts.critical * 35 + scan.counts.high * 15 + scan.counts.medium * 7 + scan.counts.low * 2;
-        scan.score = Math.max(12, 100 - penalties);
-        target.last_score = scan.score;
-        target.last_scan_at = scan.completed_at;
-
-        DB.notifications.unshift({
-          id: `notif_${Date.now()}`,
-          userId: user.id,
-          title: `Audit terminé : ${target.name}`,
-          message: `Le scan (${scan.profile}) est achevé avec un score de sécurité de ${scan.score}/100.`,
-          read: false,
-          link: `/scans/${scan.id}`,
-          created_at: new Date().toISOString(),
-        });
-
-        clearInterval(interval);
       }
-      step++;
-    } else {
-      clearInterval(interval);
-    }
-  }, 3500);
+    );
+
+    scan.status = 'completed';
+    scan.progress = 100;
+    scan.phase = 'Terminé';
+    scan.score = result.score;
+    scan.duration_seconds = result.duration_seconds;
+    scan.counts = result.counts;
+    scan.findings = result.findings as any;
+    scan.subdomains = result.subdomains;
+    scan.log_lines = result.log_lines;
+    scan.completed_at = new Date().toISOString();
+
+    target.last_score = scan.score;
+    target.last_scan_at = scan.completed_at;
+
+    DB.notifications.unshift({
+      id: `notif_${Date.now()}`,
+      userId: user.id,
+      title: `Audit réel terminé : ${target.name}`,
+      message: `L'analyse (${scan.profile}) de votre cible est achevée avec un score de sécurité de ${scan.score}/100 (${scan.findings.length} vulnérabilité(s) identifiée(s)).`,
+      read: false,
+      link: `/scans/${scan.id}`,
+      created_at: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    scan.status = 'failed';
+    scan.phase = 'Échoué';
+    scan.log_lines.push(`${new Date().toLocaleTimeString('fr-FR')} - Échec de l'audit: ${err.message || 'Erreur réseau inconnue'}`);
+  }
 }
+
+// Referral (Parrainage) API
+app.post('/api/k/referrals/apply', requireAuth, (req: Request, res: Response) => {
+  const user: DBUser = (req as any).user;
+  const { promoCode, fullName, operator, phone } = req.body;
+
+  if (!promoCode || !fullName || !phone) {
+    return res.status(400).json({ code: 400, msg: 'Tous les champs sont requis.' });
+  }
+
+  const existing = DB.referrals.find(r => r.userId === user.id);
+  if (existing) {
+    existing.promoCode = promoCode.trim().toUpperCase();
+    existing.fullName = fullName.trim();
+    existing.operator = operator || 'Wave';
+    existing.phone = phone.trim();
+    return res.json({ code: 200, msg: 'Demande mise à jour avec succès.', data: { request: existing } });
+  }
+
+  const newReq: DBReferralRequest = {
+    id: `ref_${Date.now()}`,
+    userId: user.id,
+    promoCode: promoCode.trim().toUpperCase(),
+    fullName: fullName.trim(),
+    operator: operator || 'Wave',
+    phone: phone.trim(),
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  };
+
+  DB.referrals.push(newReq);
+  return res.json({ code: 200, msg: 'Demande de parrainage envoyée avec succès.', data: { request: newReq } });
+});
+
+app.get('/api/k/referrals/me', requireAuth, (req: Request, res: Response) => {
+  const user: DBUser = (req as any).user;
+  const request = DB.referrals.find(r => r.userId === user.id);
+  return res.json({
+    code: 200,
+    msg: 'Requête réussie',
+    data: {
+      request: request || null,
+      commissions_count: 0,
+      total_earned_fcfa: 0,
+    },
+  });
+});
 
 // Development or production static serving
 async function startServer() {
