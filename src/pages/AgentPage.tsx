@@ -1,80 +1,36 @@
 import React from 'react';
-import { IconRobot } from '../components/Icons';
 
-export function AgentPage() {
-  const actions = [
-    {
-      id: 'act_1',
-      title: 'Revue autonome quotidienne',
-      target: 'votre-site.com',
-      status: 'Validée · lancée',
-      statusClass: 'bg-teal-50 text-teal-800 border-teal-200',
-      date: 'Aujourd’hui à 08:00',
-      desc: 'Vérification de l’expiration du certificat TLS et détection de nouveaux sous-domaines.',
-    },
-    {
-      id: 'act_2',
-      title: 'Surveillance proactive des en-têtes',
-      target: 'votre-site.com',
-      status: 'En cours',
-      statusClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      date: 'Hier à 14:22',
-      desc: 'Contrôle continu de la présence de Content-Security-Policy et HSTS.',
-    },
-    {
-      id: 'act_3',
-      title: 'Détection d’anomalie d’exposition API',
-      target: 'votre-site.com',
-      status: 'En attente de validation',
-      statusClass: 'bg-amber-50 text-amber-800 border-amber-200',
-      date: '06/11/2026',
-      desc: 'Nouvel endpoint /api/v2 détecté sans authentification configurée.',
-    },
-  ];
-
+export function AgentPage({ onNavigate }: { onNavigate?: (path: string) => void }) {
   return (
     <div className="space-y-6">
+      {/* Header (Screenshot 8) */}
       <div>
-        <div className="flex items-center gap-2">
-          <IconRobot className="h-6 w-6 text-black" />
-          <h1 className="font-display text-xl font-semibold sm:text-2xl md:text-3xl">
-            Agent Kortex
-          </h1>
-        </div>
-        <p className="mt-1 text-sm text-kx-muted sm:text-base">
-          Votre copilote de sécurité autonome, inspectant vos cibles et prévenant les incidents.
+        <h1 className="font-display text-2xl font-bold sm:text-3xl text-black">
+          Agent Kortex
+        </h1>
+        <p className="mt-1 text-sm text-[#71717a]">
+          Votre analyste sécurité personnel, piloté par l’IA.
         </p>
       </div>
 
-      <div className="card space-y-4">
-        <h2 className="card-title mb-1">Actions &amp; Détections autonomes</h2>
-        <div className="space-y-3">
-          {actions.map((act) => (
-            <div
-              key={act.id}
-              className="rounded-2xl border border-kx-border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-kx-panel2/30 transition"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">{act.title}</span>
-                  <span
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${act.statusClass}`}
-                  >
-                    {act.status}
-                  </span>
-                </div>
-                <p className="text-xs text-kx-muted">{act.desc}</p>
-                <p className="text-[11px] text-zinc-400">
-                  Cible : <span className="font-mono">{act.target}</span> · {act.date}
-                </p>
-              </div>
+      {/* Card (Screenshot 8) */}
+      <div className="rounded-2xl border border-[#e4e4e7] bg-white p-6 md:p-8 shadow-2xs">
+        <p className="text-sm text-black mb-4">
+          L’agent Kortex est inclus dans l’offre <strong className="font-bold">Premium (5 000 FCFA / 30 jours)</strong>.
+        </p>
 
-              <button className="btn-ghost btn-sm self-start sm:self-center">
-                Détails
-              </button>
-            </div>
-          ))}
-        </div>
+        <ul className="space-y-3 text-sm text-[#3f3f46] list-disc list-inside mb-6 leading-relaxed">
+          <li>Il analyse vos scans et vous explique chaque faille avec le correctif adapté à votre stack.</li>
+          <li>Il retient votre contexte et apprend des décisions passées pour mieux vous conseiller.</li>
+          <li>Chaque matin, il fait une revue autonome et propose les scans utiles, toujours validés par un expert Kortex avant exécution.</li>
+        </ul>
+
+        <button
+          onClick={() => onNavigate && onNavigate('/credits')}
+          className="rounded-full bg-black px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#1a1a1a] transition-colors"
+        >
+          Passer en Premium
+        </button>
       </div>
     </div>
   );

@@ -97,9 +97,9 @@ function Router() {
   } else if (currentPath === '/credits') {
     pageContent = <CreditsPage />;
   } else if (currentPath === '/agent') {
-    pageContent = <AgentPage />;
+    pageContent = <AgentPage onNavigate={navigate} />;
   } else if (currentPath === '/parrainage') {
-    pageContent = <ParrainagePage />;
+    pageContent = <ParrainagePage onNavigate={navigate} />;
   } else if (currentPath === '/settings') {
     pageContent = <SettingsPage onNavigate={navigate} />;
   }

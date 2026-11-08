@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ScanTarget, Scan } from '../types';
-import { IconCheck, IconPlus } from '../components/Icons';
+import { IconCheck } from '../components/Icons';
 
 interface TargetDetailPageProps {
   targetId: string;
@@ -76,8 +76,8 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-kx-muted">
-        <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-kx-accent border-t-transparent mr-2" />
+      <div className="flex items-center justify-center py-16 text-sm text-[#71717a]">
+        <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent mr-2" />
         Chargement…
       </div>
     );
@@ -85,9 +85,12 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
 
   if (!target) {
     return (
-      <div className="card text-center py-12">
-        <p className="text-kx-muted">Application introuvable.</p>
-        <button onClick={() => onNavigate('/targets')} className="btn btn-sm mt-4">
+      <div className="rounded-2xl border border-[#e4e4e7] bg-white text-center py-12">
+        <p className="text-sm text-[#71717a]">Application introuvable.</p>
+        <button
+          onClick={() => onNavigate('/targets')}
+          className="rounded-full bg-black px-5 py-2 text-xs font-semibold text-white mt-4"
+        >
           Retour aux applications
         </button>
       </div>
@@ -100,20 +103,20 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
       <div>
         <button
           onClick={() => onNavigate('/targets')}
-          className="text-sm font-medium text-kx-muted hover:text-black transition"
+          className="text-xs font-semibold text-[#71717a] hover:text-black transition-colors"
         >
           ← Mes applications
         </button>
       </div>
 
       {/* Target Info Card */}
-      <div className="card space-y-4">
+      <div className="rounded-2xl border border-[#e4e4e7] bg-white p-6 md:p-8 shadow-2xs space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="font-display text-2xl font-semibold">{target.name}</h1>
+              <h1 className="font-display text-2xl font-bold text-black">{target.name || target.url}</h1>
               {target.authorized ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-800">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#d7f7f1] text-[#0f5c53] px-2.5 py-0.5 text-xs font-semibold">
                   <IconCheck className="h-3 w-3" />
                   Autorisé
                 </span>
@@ -123,35 +126,37 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
                 </span>
               )}
             </div>
-            <p className="mt-1 font-mono text-sm text-kx-muted">{target.url}</p>
+            <p className="mt-1 font-mono text-xs text-[#71717a]">{target.url}</p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             <button
               onClick={() => onNavigate(`/scans/new?target=${target.id}`)}
               disabled={!target.authorized}
-              className="btn"
+              className="rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-[#1a1a1a] transition-colors disabled:opacity-40"
             >
-              <IconPlus className="h-4 w-4" />
-              <span>Lancer un scan</span>
+              Lancer un scan
             </button>
             <button
               onClick={handleToggleAuthorize}
               disabled={updatingAuth}
-              className="btn-ghost"
+              className="rounded-full border border-[#e4e4e7] bg-white px-4 py-2 text-xs font-semibold text-black hover:bg-[#f4f4f5] transition-colors"
             >
               {target.authorized ? 'Retirer l’autorisation' : 'Ré-attester'}
             </button>
-            <button onClick={handleDelete} className="btn-danger">
+            <button
+              onClick={handleDelete}
+              className="rounded-full border border-red-200 bg-red-50 text-red-600 px-4 py-2 text-xs font-semibold hover:bg-red-100 transition-colors"
+            >
               Supprimer
             </button>
           </div>
         </div>
 
-        <div className="grid gap-4 border-t border-kx-border pt-4 sm:grid-cols-3 text-xs text-kx-muted">
+        <div className="grid gap-4 border-t border-[#e4e4e7] pt-4 sm:grid-cols-3 text-xs text-[#71717a]">
           <div>
             <span className="block font-semibold text-black">Type</span>
-            <span className="capitalize">{target.target_type}</span>
+            <span className="capitalize">{target.target_type === 'web' ? 'Site web' : target.target_type === 'api' ? 'API REST' : 'GraphQL'}</span>
           </div>
           <div>
             <span className="block font-semibold text-black">Ajoutée le</span>
@@ -167,49 +172,51 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
       </div>
 
       {/* Scans list for this target */}
-      <div className="card">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="card-title mb-0">Historique des audits de cette application</h2>
-          <span className="text-xs text-kx-muted">{scans.length} scan(s)</span>
+      <div className="rounded-2xl border border-[#e4e4e7] bg-white overflow-hidden shadow-2xs">
+        <div className="p-6 border-b border-[#e4e4e7] flex items-center justify-between">
+          <h2 className="font-display text-base font-bold text-black">Historique des audits de cette application</h2>
+          <span className="text-xs text-[#71717a]">{scans.length} scan(s)</span>
         </div>
 
         {scans.length === 0 ? (
-          <p className="py-8 text-center text-sm text-kx-muted">
+          <p className="py-12 text-center text-sm text-[#71717a]">
             Aucun audit n’a encore été exécuté sur cette cible.
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="table">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-kx-border text-xs text-kx-muted uppercase tracking-wider">
-                  <th className="pb-3 font-semibold">ID</th>
-                  <th className="pb-3 font-semibold">Profil</th>
-                  <th className="pb-3 font-semibold">Statut</th>
-                  <th className="pb-3 font-semibold">Score</th>
-                  <th className="pb-3 font-semibold">Date</th>
-                  <th className="pb-3 font-semibold text-right">Action</th>
+                <tr className="border-b border-[#e4e4e7] text-xs text-[#71717a] uppercase tracking-wider bg-[#fafafa]">
+                  <th className="py-3 px-6 font-semibold">ID</th>
+                  <th className="py-3 px-6 font-semibold">Profil</th>
+                  <th className="py-3 px-6 font-semibold">Statut</th>
+                  <th className="py-3 px-6 font-semibold">Score</th>
+                  <th className="py-3 px-6 font-semibold">Date</th>
+                  <th className="py-3 px-6 font-semibold text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-kx-border">
+              <tbody className="divide-y divide-[#e4e4e7]">
                 {scans.map((s) => (
-                  <tr key={s.id} className="hover:bg-kx-panel2/50 transition">
-                    <td className="py-3 font-mono text-xs">{s.id.slice(0, 14)}</td>
-                    <td className="py-3 text-xs capitalize text-kx-muted">{s.profile}</td>
-                    <td className="py-3">
-                      <span className="inline-flex rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-800">
+                  <tr key={s.id} className="hover:bg-[#fafafa] transition-colors">
+                    <td className="py-3.5 px-6 font-mono text-xs text-black">{s.id.slice(0, 14)}</td>
+                    <td className="py-3.5 px-6 text-xs capitalize text-[#71717a]">
+                      {s.profile === 'fast' ? 'Rapide' : s.profile === 'standard' ? 'Standard' : 'Approfondi'}
+                    </td>
+                    <td className="py-3.5 px-6">
+                      <span className="inline-flex rounded-full bg-[#d7f7f1] text-[#0f5c53] px-2.5 py-0.5 text-xs font-semibold">
                         {s.status}
                       </span>
                     </td>
-                    <td className="py-3 font-display font-semibold">
+                    <td className="py-3.5 px-6 font-semibold text-black">
                       {s.score ? `${s.score}/100` : '-'}
                     </td>
-                    <td className="py-3 text-xs text-kx-muted">
+                    <td className="py-3.5 px-6 text-xs text-[#71717a]">
                       {new Date(s.created_at).toLocaleDateString('fr-FR')}
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="py-3.5 px-6 text-right">
                       <button
                         onClick={() => onNavigate(`/scans/${s.id}`)}
-                        className="btn-ghost btn-sm"
+                        className="rounded-full border border-[#e4e4e7] bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-[#f4f4f5] transition-colors"
                       >
                         Voir rapport
                       </button>

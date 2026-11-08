@@ -80,36 +80,36 @@ export function ScanDetailPage({ scanId, onNavigate }: ScanDetailPageProps) {
       <div>
         <button
           onClick={() => onNavigate('/scans')}
-          className="text-sm font-medium text-kx-muted hover:text-black transition"
+          className="text-xs font-semibold text-[#71717a] hover:text-black transition-colors"
         >
           ← Scans
         </button>
       </div>
 
       {/* Header Info Banner */}
-      <div className="card">
+      <div className="rounded-2xl border border-[#e4e4e7] bg-white p-6 shadow-2xs">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-display text-xl font-semibold sm:text-2xl break-all">
+              <h1 className="font-display text-xl font-bold sm:text-2xl break-all text-black">
                 {scan.target_url}
               </h1>
-              <span className="rounded-full bg-kx-panel2 px-2.5 py-0.5 text-xs font-semibold capitalize text-black">
+              <span className="rounded-full bg-[#f4f4f5] px-2.5 py-0.5 text-xs font-semibold capitalize text-black">
                 Profil {scan.profile}
               </span>
               {isRunning ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-black px-2.5 py-0.5 text-xs font-semibold text-white">
-                  <span className="h-1.5 w-1.5 rounded-full bg-kx-teal animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#209893] animate-pulse" />
                   {scan.phase || 'En cours'}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-800">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#d7f7f1] text-[#0f5c53] px-2.5 py-0.5 text-xs font-semibold">
                   <IconCheck className="h-3 w-3" />
                   Terminé
                 </span>
               )}
             </div>
-            <p className="mt-1 text-xs text-kx-muted">
+            <p className="mt-1 text-xs text-[#71717a]">
               Audit #{scan.id.slice(0, 14)} · Lancé le{' '}
               {new Date(scan.created_at).toLocaleString('fr-FR')}
               {scan.duration_seconds ? ` · Durée : ${scan.duration_seconds}s` : ''}
@@ -118,13 +118,22 @@ export function ScanDetailPage({ scanId, onNavigate }: ScanDetailPageProps) {
 
           {!isRunning && (
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => handleDownload('html')} className="btn-ghost btn-sm">
+              <button
+                onClick={() => handleDownload('html')}
+                className="rounded-full border border-[#e4e4e7] bg-white px-4 py-2 text-xs font-semibold text-black hover:bg-[#f4f4f5] transition-colors"
+              >
                 Télécharger HTML
               </button>
-              <button onClick={() => handleDownload('json')} className="btn-ghost btn-sm">
+              <button
+                onClick={() => handleDownload('json')}
+                className="rounded-full border border-[#e4e4e7] bg-white px-4 py-2 text-xs font-semibold text-black hover:bg-[#f4f4f5] transition-colors"
+              >
                 Export JSON
               </button>
-              <button onClick={handlePrint} className="btn btn-sm">
+              <button
+                onClick={handlePrint}
+                className="rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-[#1a1a1a] transition-colors"
+              >
                 Imprimer le rapport
               </button>
             </div>

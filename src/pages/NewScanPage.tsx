@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ScanTarget } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { IconCheck, IconShield, IconPlus } from '../components/Icons';
 
 interface NewScanPageProps {
   initialTargetId?: string;
@@ -26,7 +25,8 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
           const items: ScanTarget[] = json.data?.items || [];
           setTargets(items);
           if (!selectedTargetId && items.length > 0) {
-            setSelectedTargetId(items[0].id);
+            const firstAuth = items.find((t) => t.authorized) || items[0];
+            setSelectedTargetId(firstAuth.id);
           }
         }
       } catch (e) {
@@ -38,6 +38,7 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
     fetchTargets();
   }, [initialTargetId]);
 
+  const authorizedTargets = targets.filter((t) => t.authorized);
   const selectedTarget = targets.find((t) => t.id === selectedTargetId);
 
   // Compute pricing and cost
@@ -88,67 +89,64 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-kx-muted">
-        <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-kx-accent border-t-transparent mr-2" />
+      <div className="flex items-center justify-center py-16 text-sm text-[#71717a]">
+        <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent mr-2" />
         Chargement…
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-semibold sm:text-3xl">Lancer un audit</h1>
-        <p className="mt-1 text-sm text-kx-muted sm:text-base">
-          Choisissez l’application à auditer et le niveau de profondeur souhaité.
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* Header (Screenshot 4) */}
+      <h1 className="font-display text-2xl font-bold sm:text-3xl text-black">
+        Lancer un scan
+      </h1>
 
-      {error && <p className="alert-err">{error}</p>}
-
-      {targets.length === 0 ? (
-        <div className="card py-12 text-center">
-          <p className="text-sm text-kx-muted">
-            Vous devez d’abord déclarer une application autorisée avant de lancer un scan.
+      {/* When no authorized targets: Empty State (Screenshot 4) */}
+      {authorizedTargets.length === 0 ? (
+        <div className="rounded-2xl border border-[#e4e4e7] bg-white py-24 px-6 text-center shadow-2xs">
+          <h3 className="text-base font-bold text-black mb-2">
+            Aucune application autorisée
+          </h3>
+          <p className="text-sm text-[#71717a] mb-6">
+            Ajoutez une application et attestez votre autorisation pour pouvoir la scanner.
           </p>
-          <button onClick={() => onNavigate('/targets')} className="btn mt-4">
-            Ajouter une application
+          <button
+            onClick={() => onNavigate('/targets')}
+            className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1a1a1a] transition-colors"
+          >
+            Mes applications
           </button>
         </div>
       ) : (
-        <form onSubmit={handleLaunch} className="space-y-6">
-          {/* Step 1: Select Target */}
-          <div className="card space-y-4">
-            <h2 className="card-title mb-1">1. Sélection de la cible</h2>
-            <div className="space-y-2">
-              <label htmlFor="target-select" className="label">
-                Application autorisée
+        /* Form when targets exist */
+        <form onSubmit={handleLaunch} className="space-y-6 max-w-3xl">
+          {error && <p className="text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-200">{error}</p>}
+
+          <div className="rounded-2xl border border-[#e4e4e7] bg-white p-6 shadow-2xs space-y-4">
+            <h2 className="text-sm font-bold text-black">1. Application à auditer</h2>
+            <div>
+              <label htmlFor="target-select" className="text-xs font-semibold text-[#71717a] block mb-1.5">
+                Sélectionnez une application autorisée
               </label>
               <select
                 id="target-select"
-                className="input"
+                className="w-full rounded-xl border border-[#e4e4e7] bg-white px-4 py-2.5 text-sm text-black outline-none focus:border-black"
                 value={selectedTargetId}
                 onChange={(e) => setSelectedTargetId(e.target.value)}
               >
-                {targets.map((t) => (
+                {authorizedTargets.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name} ({t.url}) {t.authorized ? '· [Autorisé]' : '· [Non autorisé]'}
+                    {t.name || t.url} ({t.url})
                   </option>
                 ))}
               </select>
             </div>
-
-            {selectedTarget && !selectedTarget.authorized && (
-              <p className="alert-err text-xs">
-                Cette application n’est pas autorisée. Activez l’attestation dans les détails de l’application.
-              </p>
-            )}
           </div>
 
-          {/* Step 2: Choose Profile */}
-          <div className="card space-y-4">
-            <h2 className="card-title mb-1">2. Profil d’audit</h2>
+          <div className="rounded-2xl border border-[#e4e4e7] bg-white p-6 shadow-2xs space-y-4">
+            <h2 className="text-sm font-bold text-black">2. Profil d’audit</h2>
             <div className="grid gap-3 sm:grid-cols-3">
               {/* Profile Rapide */}
               <div
@@ -156,26 +154,18 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
                 className={`cursor-pointer rounded-2xl border p-4 transition flex flex-col justify-between ${
                   profile === 'fast'
                     ? 'border-black bg-black text-white shadow-md'
-                    : 'border-kx-border bg-white text-kx-text hover:border-black/30'
+                    : 'border-[#e4e4e7] bg-white text-black hover:border-black/30'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-display font-semibold text-base">Rapide</span>
-                    <span
-                      className={`text-xs font-semibold ${
-                        profile === 'fast' ? 'text-zinc-300' : 'text-kx-muted'
-                      }`}
-                    >
+                    <span className="font-bold text-sm">Rapide</span>
+                    <span className={`text-xs font-semibold ${profile === 'fast' ? 'text-zinc-300' : 'text-[#71717a]'}`}>
                       1 crédit
                     </span>
                   </div>
-                  <p
-                    className={`mt-2 text-xs leading-relaxed ${
-                      profile === 'fast' ? 'text-zinc-300' : 'text-kx-muted'
-                    }`}
-                  >
-                    Reconnaissance passive, en-têtes HTTP de sécurité, certificat SSL/TLS et détection des technologies exposées.
+                  <p className={`mt-2 text-xs leading-relaxed ${profile === 'fast' ? 'text-zinc-300' : 'text-[#71717a]'}`}>
+                    Reconnaissance passive, en-têtes HTTP de sécurité, certificat SSL/TLS et technologies exposées.
                   </p>
                 </div>
                 <p className="mt-4 text-[11px] font-medium opacity-80">Durée : ~1-2 min</p>
@@ -187,26 +177,18 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
                 className={`cursor-pointer rounded-2xl border p-4 transition flex flex-col justify-between ${
                   profile === 'standard'
                     ? 'border-black bg-black text-white shadow-md'
-                    : 'border-kx-border bg-white text-kx-text hover:border-black/30'
+                    : 'border-[#e4e4e7] bg-white text-black hover:border-black/30'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-display font-semibold text-base">Standard</span>
-                    <span
-                      className={`text-xs font-semibold ${
-                        profile === 'standard' ? 'text-zinc-300' : 'text-kx-muted'
-                      }`}
-                    >
+                    <span className="font-bold text-sm">Standard</span>
+                    <span className={`text-xs font-semibold ${profile === 'standard' ? 'text-zinc-300' : 'text-[#71717a]'}`}>
                       2 crédits
                     </span>
                   </div>
-                  <p
-                    className={`mt-2 text-xs leading-relaxed ${
-                      profile === 'standard' ? 'text-zinc-300' : 'text-kx-muted'
-                    }`}
-                  >
-                    Reconnaissance complète, CVE connues, failles de configuration, fuites de secrets dans le JS et sous-domaines.
+                  <p className={`mt-2 text-xs leading-relaxed ${profile === 'standard' ? 'text-zinc-300' : 'text-[#71717a]'}`}>
+                    Reconnaissance complète, CVE connues, failles de configuration, fuites de secrets et sous-domaines.
                   </p>
                 </div>
                 <p className="mt-4 text-[11px] font-medium opacity-80">Durée : ~3-5 min</p>
@@ -218,26 +200,18 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
                 className={`cursor-pointer rounded-2xl border p-4 transition flex flex-col justify-between ${
                   profile === 'deep'
                     ? 'border-black bg-black text-white shadow-md'
-                    : 'border-kx-border bg-white text-kx-text hover:border-black/30'
+                    : 'border-[#e4e4e7] bg-white text-black hover:border-black/30'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-display font-semibold text-base">Approfondi</span>
-                    <span
-                      className={`text-xs font-semibold ${
-                        profile === 'deep' ? 'text-zinc-300' : 'text-kx-muted'
-                      }`}
-                    >
+                    <span className="font-bold text-sm">Approfondi</span>
+                    <span className={`text-xs font-semibold ${profile === 'deep' ? 'text-zinc-300' : 'text-[#71717a]'}`}>
                       4 crédits
                     </span>
                   </div>
-                  <p
-                    className={`mt-2 text-xs leading-relaxed ${
-                      profile === 'deep' ? 'text-zinc-300' : 'text-kx-muted'
-                    }`}
-                  >
-                    Cartographie exhaustive des sous-domaines, analyse active des endpoints d'API, tests d'exposition de secrets et rapport complet.
+                  <p className={`mt-2 text-xs leading-relaxed ${profile === 'deep' ? 'text-zinc-300' : 'text-[#71717a]'}`}>
+                    Cartographie exhaustive, analyse active des endpoints d'API, tests d'exposition et rapport complet.
                   </p>
                 </div>
                 <p className="mt-4 text-[11px] font-medium opacity-80">Durée : ~10-15 min</p>
@@ -245,35 +219,34 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
             </div>
           </div>
 
-          {/* Step 3: Cost and confirmation */}
-          <div className="card space-y-4">
-            <h2 className="card-title mb-1">3. Décompte &amp; Validation</h2>
-            <div className="rounded-2xl border border-kx-border bg-kx-panel2 p-4 text-sm space-y-2">
+          <div className="rounded-2xl border border-[#e4e4e7] bg-white p-6 shadow-2xs space-y-4">
+            <h2 className="text-sm font-bold text-black">3. Décompte &amp; Validation</h2>
+            <div className="rounded-xl border border-[#e4e4e7] bg-[#f4f4f5] p-4 text-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-kx-muted">Coût de l’audit sélectionné :</span>
+                <span className="text-[#71717a]">Coût du scan sélectionné :</span>
                 <span className="font-semibold text-black">
                   {canUseFree ? (
-                    <span className="text-teal-700">1 scan de découverte offert</span>
+                    <span className="text-[#0f5c53]">1 scan gratuit (découverte)</span>
                   ) : (
-                    `${costInCredits} crédits Kortex`
+                    `${costInCredits} crédit(s) Kortex`
                   )}
                 </span>
               </div>
-              <div className="flex items-center justify-between border-t border-kx-border/60 pt-2 text-xs text-kx-muted">
-                <span>Votre solde :</span>
+              <div className="flex items-center justify-between border-t border-[#e4e4e7] pt-2 text-[11px] text-[#71717a]">
+                <span>Votre solde actuel :</span>
                 <span>
-                  <b>{freeScansAvailable}</b> scans offerts · <b>{creditsAvailable}</b> crédits
+                  <strong className="text-black">{freeScansAvailable}</strong> scan(s) gratuit(s) ·{' '}
+                  <strong className="text-black">{creditsAvailable}</strong> crédit(s)
                 </span>
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={submitting || !hasEnoughFunds || !selectedTarget?.authorized}
-              className="btn w-full py-3.5 text-base"
+              disabled={submitting || !hasEnoughFunds}
+              className="w-full rounded-full bg-black py-3 text-sm font-semibold text-white hover:bg-[#1a1a1a] transition-colors disabled:opacity-50"
             >
-              <IconShield className="h-5 w-5" />
-              <span>{submitting ? 'Lancement du scan…' : 'Démarrer l’audit'}</span>
+              {submitting ? 'Lancement du scan…' : 'Lancer le scan'}
             </button>
           </div>
         </form>
