@@ -178,6 +178,9 @@ Le projet contient un store typé pré-rempli avec votre compte de référence (
 # 1. Cloner et installer les dépendances
 npm install
 
+# Astuce : Si npm signale un avertissement de peer-dependencies sur votre machine :
+# npm install --legacy-peer-deps
+
 # 2. Démarrer le serveur full-stack Express + Vite
 npm run dev
 ```
