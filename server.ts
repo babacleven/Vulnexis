@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = createExpressApp();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
@@ -28,8 +28,21 @@ async function startServer() {
     }
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Kortex Defender running on http://0.0.0.0:${PORT}`);
+  });
+
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ ERREUR: Le port ${PORT} est déjà utilisé par une autre application ou un ancien processus Node.`);
+      console.error(`👉 Pour libérer le port sur Windows:`);
+      console.error(`   netstat -ano | findstr :${PORT}`);
+      console.error(`   taskkill /PID <PID_TROUVÉ> /F`);
+      console.error(`👉 Ou lancez sur un autre port (ex: 3001):`);
+      console.error(`   set PORT=3001 && npm run dev (cmd) ou $env:PORT=3001; npm run dev (PowerShell)\n`);
+    } else {
+      console.error('Erreur du serveur:', err);
+    }
   });
 }
 
