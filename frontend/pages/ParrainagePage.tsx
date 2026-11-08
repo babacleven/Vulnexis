@@ -11,7 +11,7 @@ export function ParrainagePage({ onNavigate }: { onNavigate?: (path: string) => 
   const [error, setError] = useState('');
 
   React.useEffect(() => {
-    fetch('/api/k/referrals/me')
+    fetch('/api/v1/referrals/me')
       .then((r) => r.json())
       .then((data) => {
         if (data.data?.request) {
@@ -47,7 +47,7 @@ export function ParrainagePage({ onNavigate }: { onNavigate?: (path: string) => 
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/k/referrals/apply', {
+      const res = await fetch('/api/v1/referrals/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

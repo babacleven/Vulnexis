@@ -15,8 +15,8 @@ export function ScansPage({ onNavigate }: { onNavigate: (path: string) => void }
       if (targetFilter !== 'Toutes') query += `target_id=${targetFilter}&`;
 
       const [sRes, tRes] = await Promise.all([
-        fetch(`/api/k/scans?${query}`),
-        fetch('/api/k/targets'),
+        fetch(`/api/v1/scans?${query}`),
+        fetch('/api/v1/targets'),
       ]);
       if (sRes.ok) {
         const json = await sRes.json();
@@ -42,7 +42,7 @@ export function ScansPage({ onNavigate }: { onNavigate: (path: string) => void }
   const handleDelete = async (id: string) => {
     if (!window.confirm('Supprimer ce scan et son rapport ? Cette action est définitive.')) return;
     try {
-      const res = await fetch(`/api/k/scans/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/v1/scans/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setScans((prev) => prev.filter((s) => s.id !== id));
       }

@@ -19,7 +19,7 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
   useEffect(() => {
     const fetchTargets = async () => {
       try {
-        const res = await fetch('/api/k/targets');
+        const res = await fetch('/api/v1/targets');
         if (res.ok) {
           const json = await res.json();
           const items: ScanTarget[] = json.data?.items || [];
@@ -67,7 +67,7 @@ export function NewScanPage({ initialTargetId, onNavigate }: NewScanPageProps) {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/k/scans', {
+      const res = await fetch('/api/v1/scans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

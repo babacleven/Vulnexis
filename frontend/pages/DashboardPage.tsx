@@ -12,8 +12,8 @@ export function DashboardPage({ onNavigate }: { onNavigate: (path: string) => vo
   const fetchData = async () => {
     try {
       const [scansRes, targetsRes] = await Promise.all([
-        fetch('/api/k/scans'),
-        fetch('/api/k/targets'),
+        fetch('/api/v1/scans'),
+        fetch('/api/v1/targets'),
       ]);
       if (scansRes.ok) {
         const sData = await scansRes.json();

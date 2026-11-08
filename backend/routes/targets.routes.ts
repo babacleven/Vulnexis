@@ -12,7 +12,7 @@ function getCurrentUserId(req: Request): string {
   return DB.users[0]?.id || '01m6rd9vpzwrzh8p8dkvhdbdkt';
 }
 
-// GET /api/k/targets
+// GET /api/v1/targets
 targetsRouter.get('/', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const items = DB.targets.filter((t) => t.userId === userId);
@@ -30,7 +30,7 @@ targetsRouter.get('/', (req: Request, res: Response) => {
   });
 });
 
-// POST /api/k/targets
+// POST /api/v1/targets
 targetsRouter.post('/', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const { url, name, target_type } = req.body;
@@ -70,7 +70,7 @@ targetsRouter.post('/', (req: Request, res: Response) => {
   });
 });
 
-// GET /api/k/targets/:id
+// GET /api/v1/targets/:id
 targetsRouter.get('/:id', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const target = DB.targets.find((t) => t.id === req.params.id && t.userId === userId);
@@ -80,7 +80,7 @@ targetsRouter.get('/:id', (req: Request, res: Response) => {
   return res.json({ code: 200, msg: 'Requête réussie', data: target });
 });
 
-// POST /api/k/targets/:id/authorize
+// POST /api/v1/targets/:id/authorize
 targetsRouter.post('/:id/authorize', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const target = DB.targets.find((t) => t.id === req.params.id && t.userId === userId);
@@ -94,7 +94,7 @@ targetsRouter.post('/:id/authorize', (req: Request, res: Response) => {
   return res.json({ code: 200, msg: 'Statut d’autorisation mis à jour', data: target });
 });
 
-// DELETE /api/k/targets/:id
+// DELETE /api/v1/targets/:id
 targetsRouter.delete('/:id', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const index = DB.targets.findIndex((t) => t.id === req.params.id && t.userId === userId);

@@ -11,7 +11,7 @@ function getCurrentUserId(req: Request): string {
   return DB.users[0]?.id || '01m6rd9vpzwrzh8p8dkvhdbdkt';
 }
 
-// GET /api/k/credits/me
+// GET /api/v1/credits/me
 creditsRouter.get('/me', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const user = DB.users.find((u) => u.id === userId);
@@ -28,7 +28,7 @@ creditsRouter.get('/me', (req: Request, res: Response) => {
   });
 });
 
-// POST /api/k/credits/redeem
+// POST /api/v1/credits/redeem
 creditsRouter.post('/redeem', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const user = DB.users.find((u) => u.id === userId);
@@ -66,7 +66,7 @@ creditsRouter.post('/redeem', (req: Request, res: Response) => {
   });
 });
 
-// GET /api/k/credits/me/transactions
+// GET /api/v1/credits/me/transactions
 creditsRouter.get('/me/transactions', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const items = DB.transactions.filter((tx) => tx.userId === userId);

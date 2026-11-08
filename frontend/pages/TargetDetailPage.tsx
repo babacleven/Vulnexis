@@ -16,8 +16,8 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
   const fetchData = async () => {
     try {
       const [tgtRes, scansRes] = await Promise.all([
-        fetch(`/api/k/targets/${targetId}`),
-        fetch(`/api/k/scans?target_id=${targetId}`),
+        fetch(`/api/v1/targets/${targetId}`),
+        fetch(`/api/v1/scans?target_id=${targetId}`),
       ]);
       if (tgtRes.ok) {
         const json = await tgtRes.json();
@@ -47,7 +47,7 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
 
     setUpdatingAuth(true);
     try {
-      const res = await fetch(`/api/k/targets/${target.id}/authorize`, { method: 'POST' });
+      const res = await fetch(`/api/v1/targets/${target.id}/authorize`, { method: 'POST' });
       if (res.ok) {
         const json = await res.json();
         setTarget(json.data);
@@ -65,7 +65,7 @@ export function TargetDetailPage({ targetId, onNavigate }: TargetDetailPageProps
       return;
     }
     try {
-      const res = await fetch(`/api/k/targets/${target.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/v1/targets/${target.id}`, { method: 'DELETE' });
       if (res.ok) {
         onNavigate('/targets');
       }

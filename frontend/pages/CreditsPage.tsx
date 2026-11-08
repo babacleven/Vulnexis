@@ -15,7 +15,7 @@ export function CreditsPage() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await fetch('/api/k/credits/me/transactions');
+      const res = await fetch('/api/v1/credits/me/transactions');
       if (res.ok) {
         const json = await res.json();
         setTransactions(json.data?.items || []);
@@ -37,7 +37,7 @@ export function CreditsPage() {
 
     setRedeeming(true);
     try {
-      const res = await fetch('/api/k/credits/redeem', {
+      const res = await fetch('/api/v1/credits/redeem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: voucherCode.trim() }),
@@ -425,7 +425,7 @@ export function CreditsPage() {
                 onClick={async () => {
                   alert('Paiement confirmé par MoneyFusion ! Vos crédits ont été ajoutés.');
                   setCheckoutModal(null);
-                  await fetch('/api/k/credits/redeem', {
+                  await fetch('/api/v1/credits/redeem', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: 'PREMIUM' }),

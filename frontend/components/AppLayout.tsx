@@ -31,7 +31,7 @@ export function AppLayout({ currentPath, onNavigate, children }: AppLayoutProps)
 
   const fetchNotifs = async () => {
     try {
-      const res = await fetch('/api/k/notifications/me');
+      const res = await fetch('/api/v1/notifications/me');
       if (res.ok) {
         const json = await res.json();
         if (json.data?.items) {
@@ -39,7 +39,7 @@ export function AppLayout({ currentPath, onNavigate, children }: AppLayoutProps)
           setUnreadCount(json.data.items.filter((n: NotificationItem) => !n.read).length);
         }
       }
-      const countRes = await fetch('/api/k/notifications/me/unread-count');
+      const countRes = await fetch('/api/v1/notifications/me/unread-count');
       if (countRes.ok) {
         const cJson = await countRes.json();
         setUnreadCount(cJson.data?.count || 0);
@@ -54,7 +54,7 @@ export function AppLayout({ currentPath, onNavigate, children }: AppLayoutProps)
   }, []);
 
   const handleMarkAllRead = async () => {
-    await fetch('/api/k/notifications/read-all', { method: 'POST' }).catch(() => null);
+    await fetch('/api/v1/notifications/read-all', { method: 'POST' }).catch(() => null);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   };

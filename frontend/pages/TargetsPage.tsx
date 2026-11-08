@@ -15,7 +15,7 @@ export function TargetsPage({ onNavigate }: { onNavigate: (path: string) => void
 
   const fetchTargets = async () => {
     try {
-      const res = await fetch('/api/k/targets');
+      const res = await fetch('/api/v1/targets');
       if (res.ok) {
         const json = await res.json();
         setTargets(json.data?.items || []);
@@ -50,7 +50,7 @@ export function TargetsPage({ onNavigate }: { onNavigate: (path: string) => void
         'API REST': 'api',
         'GraphQL': 'graphql',
       };
-      const res = await fetch('/api/k/targets', {
+      const res = await fetch('/api/v1/targets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -80,7 +80,7 @@ export function TargetsPage({ onNavigate }: { onNavigate: (path: string) => void
       return;
     }
     try {
-      const res = await fetch(`/api/k/targets/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/v1/targets/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setTargets((prev) => prev.filter((t) => t.id !== id));
       }

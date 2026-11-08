@@ -15,7 +15,7 @@ export function ScanDetailPage({ scanId, onNavigate }: ScanDetailPageProps) {
 
   const fetchScan = async () => {
     try {
-      const res = await fetch(`/api/k/scans/${scanId}`);
+      const res = await fetch(`/api/v1/scans/${scanId}`);
       if (res.ok) {
         const json = await res.json();
         setScan(json.data);
@@ -37,7 +37,7 @@ export function ScanDetailPage({ scanId, onNavigate }: ScanDetailPageProps) {
   }, [scanId]);
 
   const handleDownload = (format: 'html' | 'json') => {
-    window.location.href = `/api/k/scans/${scanId}/download?format=${format}`;
+    window.location.href = `/api/v1/scans/${scanId}/download?format=${format}`;
   };
 
   const handlePrint = () => {

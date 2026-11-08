@@ -12,7 +12,14 @@ export function createExpressApp() {
   app.use(express.json());
   app.use(cookieParser());
 
-  // Mount API Routers
+  // Canonical API v1 Routers
+  app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/targets', targetsRouter);
+  app.use('/api/v1/scans', scansRouter);
+  app.use('/api/v1/credits', creditsRouter);
+  app.use('/api/v1', miscRouter);
+
+  // Compatibility aliases for /api/k and /api/auth
   app.use('/api/auth', authRouter);
   app.use('/api/k/targets', targetsRouter);
   app.use('/api/k/scans', scansRouter);

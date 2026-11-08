@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchCredits = async () => {
     try {
-      const res = await fetch('/api/k/credits/me');
+      const res = await fetch('/api/v1/credits/me');
       if (res.ok) {
         const json = await res.json();
         if (json.data) {
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (email: string, password: string, phone: string, referralCode?: string) => {
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch('/api/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, phone, referral_code: referralCode }),
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyOtp = async (email: string, code: string) => {
-    const res = await fetch('/api/auth/verify-otp', {
+    const res = await fetch('/api/v1/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code }),
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resendOtp = async (email: string) => {
-    const res = await fetch('/api/auth/resend-otp', {
+    const res = await fetch('/api/v1/auth/resend-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => null);
+    await fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => null);
     setUser(null);
     setCreditsData(null);
   };

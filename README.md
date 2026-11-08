@@ -4,6 +4,7 @@
 [![React 19](https://img.shields.io/badge/React-19.0-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
+[![API Standard](https://img.shields.io/badge/API-REST%20%2Fapi%2Fv1%2F-emerald.svg)](#-documentation-de-lapi-apiv1)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](#)
 
 > **Kortex Defender** est une plateforme SaaS de cybersécurité conçue pour permettre aux entreprises, développeurs et organisations d'auditer la sécurité de leurs sites web et API, d'identifier les vulnérabilités avant qu'elles ne soient exploitées, et d'obtenir des correctifs clairs et actionnables.
@@ -16,13 +17,15 @@ La plateforme est nativement adaptée aux réalités économiques et techniques 
 
 1. [Fonctionnalités Principales](#-fonctionnalités-principales)
 2. [Profils d'Audit & Décompte](#-profils-daudit--décompte)
-3. [Architecture Technique](#-architecture-technique)
-4. [Structure du Projet](#-structure-du-projet)
-5. [Documentation de l'API](#-documentation-de-lapi)
-6. [Installation & Démarrage](#-installation--démarrage)
-7. [Variables d'Environnement](#-variables-denvironnement)
-8. [Éthique & Conformité Juridique](#-éthique--conformité-juridique)
-9. [Feuille de Route & Backlog de Production](#-feuille-de-route--backlog-de-production)
+3. [Architecture Technique (Séparation Frontend & Backend)](#-architecture-technique)
+4. [Documentation de l'API (`/api/v1/`)](#-documentation-de-lapi-apiv1)
+5. [Installation & Lancement du Projet](#-installation--lancement-du-projet)
+   - [Option 1 : Démarrage Rapide (En Mémoire)](#option-1--démarrage-rapide-base-en-mémoire-immédiate)
+   - [Option 2 : Démarrage avec PostgreSQL & Prisma](#option-2--démarrage-avec-une-vraie-base-de-données-postgresql--prisma)
+6. [Variables d'Environnement](#-variables-denvironnement)
+7. [Éthique & Conformité Juridique](#-éthique--conformité-juridique)
+8. [Feuille de Route & Backlog de Production](#-feuille-de-route--backlog-de-production)
+9. [Documentation Approfondie](#-documentation-approfondie)
 
 ---
 
@@ -33,7 +36,7 @@ La plateforme est nativement adaptée aux réalités économiques et techniques 
 - **Attestation de propriété obligatoire** : Signature horodatée certifiant que l'utilisateur est propriétaire de la cible ou dispose d'une autorisation écrite formelle.
 - **Historique & Métriques** : Suivi du score de sécurité dans le temps et comptage des audits réalisés.
 
-### 2. Moteur d'Audit Modulaire
+### 2. Moteur d'Audit Modulaire Réel
 - **Inspection SSL/TLS** : Validité du certificat, autorité émettrice, détection de l'expiration imminente, contrôle des protocoles (TLS 1.2, TLS 1.3) et suites de chiffrement.
 - **Audit des en-têtes HTTP de sécurité** : Vérification de la présence et de la configuration de `Content-Security-Policy` (CSP), `Strict-Transport-Security` (HSTS), `X-Frame-Options` (anti-clickjacking), `X-Content-Type-Options`, `Referrer-Policy`, et `Permissions-Policy`.
 - **Détection des fuites d'informations** : Identification des signatures logicielles et versions exposées (`Server`, `X-Powered-By`).
@@ -76,157 +79,147 @@ La plateforme est nativement adaptée aux réalités économiques et techniques 
 
 ## 🏗 Architecture Technique
 
-L'application repose sur une architecture **Full-Stack intégrée** avec Vite et Express :
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        FRONTEND CLIENT (SPA)                           │
-│  React 19 · TypeScript · Tailwind CSS v4 · Motion · Lucide Icons       │
-│  Navigation client réactive · Suivi temps réel des audits              │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Proxy interne HTTP / JSON
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                     SERVEUR BACKEND (Node.js / Express)                │
-│                                                                        │
-│  ┌────────────────────────┐  ┌────────────────────────┐                │
-│  │ Authentification       │  │ Gestionnaire Solde &   │                │
-│  │ Cookie HttpOnly / Auth │  │ Codes Recharges (KX)   │                │
-│  └────────────────────────┘  └────────────────────────┘                │
-│                                                                        │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │                 MOTEUR DE SCAN RÉSEAU & AUDIT                    │  │
-│  │  - DNS Lookup (node:dns)       - Diagnostic TLS (node:tls)       │  │
-│  │  - Sondes HTTP Headers         - Détection Subdomains            │  │
-│  │  - Rapprochement CVE           - Calcul Score /100               │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │                      COUCHE DE PERSISTANCE                       │  │
-│  │  In-Memory Storage (Dev) ──> PostgreSQL / Prisma (Production)    │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📁 Structure du Projet (Séparation Frontend & Backend)
-
-Le projet adopte une **Architecture Monorepo Découplée** avec deux répertoires étanches :
+L'application repose sur une **Architecture Monorepo Découplée en Couches** avec séparation stricte des répertoires :
 
 ```text
-├── index.html                 # Point d'entrée HTML principal (SEO & Google Fonts)
-├── metadata.json              # Métadonnées et permissions de l'application
-├── package.json               # Dépendances et scripts npm
-├── server.ts                  # Orchestrateur racine Express (Port 3000) & pont Vite
-├── tsconfig.json              # Configuration TypeScript
-├── vite.config.ts             # Configuration du bundler Vite avec Tailwind CSS v4
-├── ISSUES.md                  # Backlog des 16 issues pour le déploiement réel
-├── README.md                  # Documentation complète du projet
-├── GUIDE_PROJET.md            # Guide explicatif détaillé d'architecture et de fonctionnement
-├── public/                    # Fichiers statiques et logos
-│   └── kortex-logo.svg        # Logo vectoriel officiel Kortex Defender
+kortex-defender/
 │
-├── frontend/                  # [APPLICATION REACT SPA]
-│   ├── App.tsx                # Routeur principal et gestionnaire de session
-│   ├── main.tsx               # Point d'entrée React 19
-│   ├── index.css              # Feuille de style globale Tailwind CSS v4
-│   ├── types.ts               # Définitions TypeScript (User, Target, Scan, Finding...)
-│   ├── components/            # Composants partagés (AppLayout, Icons...)
-│   ├── context/               # Contexte d'état global (AuthContext...)
-│   └── pages/                 # Les 13 vues applicatives (Dashboard, Scans, Targets...)
+├── server.ts                   <-- [ORCHESTRATEUR] Démarre le serveur sur le port 3000
 │
-└── backend/                   # [API & MOTEURS NODE.JS / EXPRESS]
-    ├── app.ts                 # Factory Express avec enregistrement des 5 routeurs
-    ├── db.ts                  # Store de données en mémoire (prêt pour PostgreSQL)
-    ├── types.ts               # Modèles de données (DBUser, DBTarget, DBScan...)
+├── frontend/                   <-- [APPLICATION REACT SPA]
+│   ├── App.tsx                # Routeur applicatif & gestion de session
+│   ├── main.tsx               # Point de montage React 19
+│   ├── index.css              # Design system Tailwind CSS v4
+│   ├── types.ts               # Typage client (User, Target, Scan...)
+│   ├── components/            # Composants UI (AppLayout, Icons...)
+│   ├── context/               # Contexte global (AuthContext...)
+│   └── pages/                 # Les 13 vues du produit (Dashboard, Scans...)
+│
+└── backend/                    <-- [API REST & MOTEURS NODE.JS / EXPRESS]
+    ├── app.ts                 # Factory Express & montage des routeurs /api/v1/*
+    ├── db.ts                  # Store de données (prêt pour PostgreSQL)
+    ├── types.ts               # Modèles de données typés
     ├── routes/                # Contrôleurs API REST découpés par domaine
     │   ├── auth.routes.ts     # Inscription, connexion, OTP WhatsApp
     │   ├── targets.routes.ts  # Gestion des cibles et attestations
     │   ├── scans.routes.ts    # Lancement, suivi et rapports d'audits
     │   ├── credits.routes.ts  # Solde, coupons KX et historique
     │   └── misc.routes.ts     # Profil, notifications, parrainage
-    └── services/              # Moteurs de calcul et d'analyse
+    └── services/              # Moteurs de calcul et d'analyse réseau
         ├── scanner.ts         # Orchestrateur asynchrone des scans
         └── real-engine.ts     # Moteur réseau réel (DNS, TLS, Headers, CVSS)
 ```
 
-> 📖 **Pour une explication approfondie de l'architecture et du fonctionnement interne de chaque composant, consultez le guide complet : [`GUIDE_PROJET.md`](./GUIDE_PROJET.md)**.
+---
+
+## 📡 Documentation de l'API (`/api/v1/`)
+
+Tous les endpoints métier sont désormais standardisés sous **`/api/v1/`** et protégés par session authentifiée via le cookie HTTP `kortex_session`.
+
+### 1. Authentification (`/api/v1/auth/*`)
+| Méthode | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/v1/auth/register` | Inscription d'un nouvel utilisateur (attribue 3 scans gratuits). |
+| `POST` | `/api/v1/auth/login` | Connexion avec email et mot de passe. |
+| `POST` | `/api/v1/auth/logout` | Déconnexion et révocation de la session. |
+| `POST` | `/api/v1/auth/send-otp` | Envoi d'un code OTP WhatsApp. |
+| `POST` | `/api/v1/auth/verify-otp` | Validation du code OTP à 6 chiffres. |
+
+### 2. Applications & Cibles (`/api/v1/targets/*`)
+| Méthode | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/v1/targets` | Liste de toutes les applications de l'utilisateur. |
+| `POST` | `/api/v1/targets` | Déclaration d'une nouvelle cible avec attestation d'autorisation légale. |
+| `GET` | `/api/v1/targets/:id` | Détails d'une application et historique spécifique. |
+| `POST` | `/api/v1/targets/:id/authorize` | Activation / révocation de l'attestation légale de scan. |
+| `DELETE` | `/api/v1/targets/:id` | Suppression définitive d'une cible et de son historique. |
+
+### 3. Moteur de Scans & Rapports (`/api/v1/scans/*`)
+| Méthode | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/v1/scans` | Liste des audits avec filtrage possible par statut et cible. |
+| `POST` | `/api/v1/scans` | Lancement d'un scan (`target_id`, profil : `fast`, `standard`, `deep`). |
+| `GET` | `/api/v1/scans/:id` | Progression en temps réel et rapport complet du scan. |
+| `GET` | `/api/v1/scans/:id/download` | Téléchargement du rapport au format HTML ou JSON (`?format=html`). |
+| `DELETE` | `/api/v1/scans/:id` | Suppression définitive d'un rapport de scan. |
+
+### 4. Facturation & Crédits (`/api/v1/credits/*`)
+| Méthode | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/v1/credits/me` | Solde actuel de crédits et scans de découverte restants. |
+| `POST` | `/api/v1/credits/redeem` | Activation d'un code de recharge (`KX-XXXX-XXXX-XXXX`). |
+| `GET` | `/api/v1/credits/me/transactions` | Historique de toutes les consommations et attributions. |
+
+### 5. Profil, Notifications & Affiliation (`/api/v1/*`)
+| Méthode | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/v1/me` | Informations du profil utilisateur connecté. |
+| `GET` | `/api/v1/notifications/me` | Liste des alertes de sécurité. |
+| `GET` | `/api/v1/notifications/me/unread-count` | Nombre d'alertes non lues. |
+| `POST` | `/api/v1/notifications/read-all` | Marquer toutes les alertes comme lues. |
+| `GET` | `/api/v1/referrals/me` | Statut de la demande d'affiliation. |
+| `POST` | `/api/v1/referrals/apply` | Soumission du dossier de parrainage avec numéro Mobile Money. |
 
 ---
 
-## 📡 Documentation de l'API
-
-Tous les endpoints métier sont préfixés par `/api/k/` et protégés par session authentifiée (cookie `kortex_session`).
-
-### Authentification & Utilisateur
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/auth/register` | Inscription d'un nouvel utilisateur (crédite 3 scans gratuits). |
-| `POST` | `/api/auth/login` | Connexion avec email et mot de passe. |
-| `POST` | `/api/auth/logout` | Déconnexion et révocation de la session. |
-| `GET` | `/api/k/me` | Informations du profil utilisateur connecté. |
-
-### Gestion des Cibles (Applications)
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/k/targets` | Liste de toutes les applications de l'utilisateur. |
-| `POST` | `/api/k/targets` | Déclaration d'une nouvelle cible avec attestation d'autorisation. |
-| `GET` | `/api/k/targets/:id` | Détails d'une application et statistiques d'audit. |
-| `POST` | `/api/k/targets/:id/authorize` | Activation / révocation de l'attestation légale de scan. |
-| `DELETE` | `/api/k/targets/:id` | Suppression définitive d'une cible et de son historique. |
-
-### Moteur de Scan & Rapports
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/k/scans` | Liste des audits avec filtrage possible par statut et cible. |
-| `POST` | `/api/k/scans` | Lancement d'un scan (`target_id`, profil : `fast`, `standard`, `deep`). |
-| `GET` | `/api/k/scans/:id` | Progression en temps réel et rapport complet du scan. |
-| `GET` | `/api/k/scans/:id/download` | Téléchargement du rapport au format HTML ou JSON (`?format=html`). |
-| `DELETE` | `/api/k/scans/:id` | Suppression d'un rapport de scan. |
-
-### Facturation & Crédits
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/k/credits/me` | Solde actuel de crédits et scans de découverte restants. |
-| `POST` | `/api/k/credits/redeem` | Activation d'un code de recharge (`KX-XXXX-XXXX-XXXX`). |
-| `GET` | `/api/k/credits/me/transactions` | Historique de toutes les consommations et attributions. |
-
----
-
-## ⚙️ Installation & Démarrage
+## ⚙️ Installation & Lancement du Projet
 
 ### Pré-requis
 - **Node.js** version 18.0.0 ou supérieure.
 - **npm** version 9.0.0 ou supérieure.
 
-### 1. Cloner le projet
-```bash
-git clone <URL_DU_DEPOT>
-cd kortex-defender
-```
+---
 
-### 2. Installer les dépendances
+### Option 1 : Démarrage Rapide (Base en mémoire immédiate)
+
+Le projet contient un store typé pré-rempli avec votre compte de référence (`babaaristote6@gmail.com`, 0 crédit, 2 scans gratuits restants, cibles vides).
+
 ```bash
+# 1. Cloner et installer les dépendances
 npm install
-```
 
-### 3. Configurer l'environnement
-Copiez le fichier d'exemple et renseignez les variables nécessaires :
-```bash
-cp .env.example .env
-```
-
-### 4. Lancer le serveur de développement
-```bash
+# 2. Démarrer le serveur full-stack Express + Vite
 npm run dev
 ```
-L'application est accessible sur : **`http://localhost:3000`**
 
-### 5. Compiler pour la production
+L'application est disponible immédiatement sur : **`http://localhost:3000`**.
+
+---
+
+### Option 2 : Démarrage avec une Vraie Base de Données PostgreSQL & Prisma
+
+Pour exécuter Kortex Defender avec une véritable base de données relationnelle persistante :
+
+#### 1. Lancer PostgreSQL localement avec Docker
 ```bash
-npm run build
-npm run lint
+docker run --name kortex-postgres \
+  -e POSTGRES_USER=kortex \
+  -e POSTGRES_PASSWORD=kortex_secret_2026 \
+  -e POSTGRES_DB=kortex_defender \
+  -p 5432:5432 \
+  -d postgres:16-alpine
+```
+
+#### 2. Configurer le fichier `.env`
+Créez ou modifiez le fichier `.env` à la racine :
+```env
+DATABASE_URL="postgresql://kortex:kortex_secret_2026@localhost:5432/kortex_defender?schema=public"
+PORT=3000
+APP_URL="http://localhost:3000"
+```
+
+#### 3. Installer Prisma & initialiser la base
+```bash
+npm install @prisma/client
+npm install -D prisma
+
+# Générer les tables relationnelles
+npx prisma migrate dev --name init_kortex_db
+```
+
+#### 4. Lancer l'application
+```bash
+npm run dev
 ```
 
 ---
@@ -238,6 +231,9 @@ Le fichier `.env.example` définit les variables de configuration supportées :
 ```env
 # URL publique de déploiement de l'application
 APP_URL="http://localhost:3000"
+
+# URL de la base de données PostgreSQL (optionnelle en dev avec store mémoire)
+DATABASE_URL="postgresql://kortex:secret@localhost:5432/kortex_defender?schema=public"
 
 # Clé API Google Gemini (utilisée pour l'Agent Kortex en production)
 GEMINI_API_KEY=""
@@ -270,6 +266,8 @@ Pour planifier le passage en production réelle avec des passerelles bancaires e
 
 ---
 
-## 🛡 Licence & Propriété
+## 📖 Documentation Approfondie
 
-Ce logiciel est la propriété exclusive de **Kortex Defender**. Tous droits réservés.
+Pour comprendre en détail l'architecture interne, le rôle précis de chaque fichier et le parcours complet des données de bout en bout, consultez le guide de référence :
+
+👉 **[`GUIDE_PROJET.md`](./GUIDE_PROJET.md)**

@@ -12,7 +12,7 @@ function getCurrentUserId(req: Request): string {
   return DB.users[0]?.id || '01m6rd9vpzwrzh8p8dkvhdbdkt';
 }
 
-// GET /api/k/scans
+// GET /api/v1/scans
 scansRouter.get('/', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   let items = DB.scans.filter((s) => s.userId === userId);
@@ -39,7 +39,7 @@ scansRouter.get('/', (req: Request, res: Response) => {
   });
 });
 
-// POST /api/k/scans
+// POST /api/v1/scans
 scansRouter.post('/', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const user = DB.users.find((u) => u.id === userId);
@@ -118,7 +118,7 @@ scansRouter.post('/', (req: Request, res: Response) => {
   });
 });
 
-// GET /api/k/scans/:id
+// GET /api/v1/scans/:id
 scansRouter.get('/:id', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const scan = DB.scans.find((s) => s.id === req.params.id && s.userId === userId);
@@ -128,7 +128,7 @@ scansRouter.get('/:id', (req: Request, res: Response) => {
   return res.json({ code: 200, msg: 'Requête réussie', data: scan });
 });
 
-// GET /api/k/scans/:id/download
+// GET /api/v1/scans/:id/download
 scansRouter.get('/:id/download', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const scan = DB.scans.find((s) => s.id === req.params.id && s.userId === userId);
@@ -177,7 +177,7 @@ scansRouter.get('/:id/download', (req: Request, res: Response) => {
   return res.send(html);
 });
 
-// DELETE /api/k/scans/:id
+// DELETE /api/v1/scans/:id
 scansRouter.delete('/:id', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const index = DB.scans.findIndex((s) => s.id === req.params.id && s.userId === userId);

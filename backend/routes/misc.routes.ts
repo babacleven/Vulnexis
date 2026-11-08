@@ -11,7 +11,7 @@ function getCurrentUserId(req: Request): string {
   return DB.users[0]?.id || '01m6rd9vpzwrzh8p8dkvhdbdkt';
 }
 
-// GET /api/k/me
+// GET /api/v1/me
 miscRouter.get('/me', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const user = DB.users.find((u) => u.id === userId);
@@ -33,7 +33,7 @@ miscRouter.get('/me', (req: Request, res: Response) => {
   });
 });
 
-// GET /api/k/notifications/me
+// GET /api/v1/notifications/me
 miscRouter.get('/notifications/me', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const items = DB.notifications.filter((n) => n.userId === userId);
@@ -44,7 +44,7 @@ miscRouter.get('/notifications/me', (req: Request, res: Response) => {
   });
 });
 
-// GET /api/k/notifications/me/unread-count
+// GET /api/v1/notifications/me/unread-count
 miscRouter.get('/notifications/me/unread-count', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const count = DB.notifications.filter((n) => n.userId === userId && !n.read).length;
@@ -55,7 +55,7 @@ miscRouter.get('/notifications/me/unread-count', (req: Request, res: Response) =
   });
 });
 
-// POST /api/k/notifications/read-all
+// POST /api/v1/notifications/read-all
 miscRouter.post('/notifications/read-all', (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   DB.notifications.forEach((n) => {
@@ -64,8 +64,19 @@ miscRouter.post('/notifications/read-all', (req: Request, res: Response) => {
   return res.json({ code: 200, msg: 'Notifications marquées comme lues' });
 });
 
-// POST /api/k/parrainage/apply
-miscRouter.post('/parrainage/apply', (req: Request, res: Response) => {
+// GET /api/v1/referrals/me
+miscRouter.get('/referrals/me', (req: Request, res: Response) => {
+  const userId = getCurrentUserId(req);
+  const request = DB.referralRequests.find((r) => r.userId === userId);
+  return res.json({
+    code: 200,
+    msg: 'Requête réussie',
+    data: { request: request || null },
+  });
+});
+
+// Handler for referral applications
+const handleReferralApply = (req: Request, res: Response) => {
   const userId = getCurrentUserId(req);
   const { promoCode, fullName, operator, phone } = req.body;
 
@@ -73,6 +84,7 @@ miscRouter.post('/parrainage/apply', (req: Request, res: Response) => {
     return res.status(400).json({ code: 400, msg: 'Tous les champs obligatoires doivent être renseignés.' });
   }
 
+  const existingIdx = DB.referralRequests.findIndex((r) => r.userId === userId);
   const newRequest = {
     id: `req_${Date.now()}`,
     userId,
@@ -84,11 +96,19 @@ miscRouter.post('/parrainage/apply', (req: Request, res: Response) => {
     created_at: new Date().toISOString(),
   };
 
-  DB.referralRequests.push(newRequest);
+  if (existingIdx >= 0) {
+    DB.referralRequests[existingIdx] = newRequest;
+  } else {
+    DB.referralRequests.push(newRequest);
+  }
 
   return res.json({
     code: 200,
     msg: 'Votre demande a été transmise avec succès et sera validée sous 24h.',
     data: newRequest,
   });
-});
+};
+
+// POST /api/v1/referrals/apply and alias /api/v1/parrainage/apply
+miscRouter.post('/referrals/apply', handleReferralApply);
+miscRouter.post('/parrainage/apply', handleReferralApply);
