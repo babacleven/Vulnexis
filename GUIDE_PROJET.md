@@ -261,18 +261,28 @@ Ce chapitre vous explique exactement comment exécuter l'application selon deux 
 
 ### Option 1 : Lancement Immédiat (Base en mémoire intégrée)
 
-Le projet contient un store pré-rempli dans `backend/db.ts` avec la session exacte du compte `babaaristote6@gmail.com` (0 crédit, 2 scans gratuits, cibles vides et historiques de transactions).
+Le projet supporte 3 modes de lancement selon vos préférences de développement :
 
+#### A. Mode Full-Stack Unifié (Recommandé)
+Lance le frontend et le backend ensemble sur un port unique :
 ```bash
-# 1. Installer les dépendances du projet
-npm install
-
-# 2. Démarrer le serveur full-stack
 npm run dev
 ```
+👉 Accessible sur **`http://localhost:3000`**
 
-L'application est immédiatement accessible dans votre navigateur sur :
-👉 **`http://localhost:3000`** (ou l'URL Cloud Run fournie dans l'environnement).
+#### B. Lancer uniquement le Backend
+Lance exclusivement le serveur d'API Express sans l'interface :
+```bash
+npm run dev:back
+```
+👉 Serveur API actif sur **`http://localhost:5000`** (Canonical API : `http://localhost:5000/api/v1/`)
+
+#### C. Lancer uniquement le Frontend
+Lance le client Vite de développement avec proxying automatique vers le backend :
+```bash
+npm run dev:front
+```
+👉 Application client active sur **`http://localhost:5173`** (les requêtes `/api/*` sont automatiquement redirigées vers `http://localhost:5000`)
 
 ---
 

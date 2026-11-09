@@ -221,8 +221,18 @@ npx prisma migrate dev --name init_kortex_db
 ```
 
 #### 4. Lancer l'application
+
+Le projet supporte 3 modes d'exécution :
+
 ```bash
+# Mode 1 : Full-stack unifié (Frontend + Backend sur http://localhost:3000)
 npm run dev
+
+# Mode 2 : Lancer UNIQUEMENT le Backend (API Express sur http://localhost:5000)
+npm run dev:back
+
+# Mode 3 : Lancer UNIQUEMENT le Frontend (Vite client sur http://localhost:5173 avec proxying /api)
+npm run dev:front
 ```
 
 ---
