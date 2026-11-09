@@ -206,21 +206,39 @@ npm run dev:front
 
 ---
 
-### 🗄️ Comment fonctionne la Base de Données Locale ?
+### 🐘 Brancher votre PostgreSQL Local (Installé sur votre PC)
 
-Le fichier **`backend/db.ts`** agit comme votre base de données locale instantanée :
-* **Utilisateurs** (`DB.users`) : Contient votre compte `babaaristote6@gmail.com`.
-* **Cibles** (`DB.targets`) : Stocke vos URLs et applications ajoutées en cours de session.
-* **Scans** (`DB.scans`) : Enregistre vos audits avec leurs vulnérabilités détaillées.
-* **Transactions & Crédits** (`DB.transactions`) : Gère vos crédits et vos scans gratuits.
-* **Notifications** (`DB.notifications`) : Historique des alertes système.
+Puisque vous avez déjà PostgreSQL installé sur votre machine, vous pouvez vous y connecter directement **sans Docker** :
 
-Vous pouvez modifier directement les données de départ dans `backend/db.ts` pour tester différents scénarios sans jamais avoir à taper de commandes SQL ou à lancer un conteneur.
+#### Étape 1 : Créer la base de données
+Dans votre outil favori (**pgAdmin**, **DBeaver**, ou dans le terminal `psql`) :
+```sql
+CREATE DATABASE kortex_defender;
+```
 
----
+#### Étape 2 : Créer les tables et insérer les données
+Deux scripts SQL prêts à l'emploi sont fournis dans le dossier `backend/db/` :
+1. Exécutez le script **`backend/db/schema.sql`** (crée automatiquement les 6 tables relationnelles et les index).
+2. Exécutez le script **`backend/db/seed.sql`** (insère votre compte de test `babaaristote6@gmail.com`).
 
-> 🚀 **Note sur la Production (PostgreSQL, Docker, Prisma)** :  
-> Ces outils sont réservés pour le déploiement final sur un serveur cloud distant. Ils sont détaillés dans [`FEUILLE_DE_ROUTE_PRODUCTION.md`](./FEUILLE_DE_ROUTE_PRODUCTION.md). Vous pouvez les ignorer totalement tant que vous travaillez en local.
+#### Étape 3 : Indiquer votre mot de passe dans `.env`
+Créez un fichier `.env` à la racine du projet avec vos identifiants PostgreSQL locaux :
+```env
+# Remplacez "mot_de_passe" par le mot de passe de votre utilisateur postgres
+DATABASE_URL="postgresql://postgres:mot_de_passe@localhost:5432/kortex_defender"
+```
+
+#### Étape 4 : Lancer le projet
+```bash
+npm run dev
+# ou séparé : npm run dev:back
+```
+Au démarrage, la console confirme automatiquement la connexion :
+```text
+🐘 [PostgreSQL] Connecté avec succès à votre base locale ! (Heure serveur: ...)
+```
+
+*(Si vous ne renseignez pas `DATABASE_URL` ou si PostgreSQL est arrêté, le projet bascule automatiquement sur le store autonome `backend/db.ts` sans jamais planter).*
 
 ---
 

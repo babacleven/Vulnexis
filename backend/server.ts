@@ -1,12 +1,14 @@
 import { createExpressApp } from './app.ts';
+import { testPostgresConnection } from './db/postgres.ts';
 
 const app = createExpressApp();
 const PORT = parseInt(process.env.BACKEND_PORT || '5000', 10);
 const HOST = '0.0.0.0';
 
-const server = app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, async () => {
   console.log(`\n🚀 [Backend API] Serveur Backend actif sur http://localhost:${PORT}`);
   console.log(`📡 Endpoints API canoniques disponibles sous http://localhost:${PORT}/api/v1/\n`);
+  await testPostgresConnection();
 });
 
 server.on('error', (err: any) => {

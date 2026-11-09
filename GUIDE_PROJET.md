@@ -312,12 +312,48 @@ export const DB = {
 
 ---
 
-## 9. Annexe Optionnelle : Déploiement Futur en Production (PostgreSQL, Docker & Prisma)
+### 🐘 Utiliser votre PostgreSQL Local (Installé sur votre PC sans Docker)
+
+Puisque vous avez déjà PostgreSQL installé nativement sur votre ordinateur (sur le port standard 5432) :
+
+#### Étape 1 : Créer la base de données
+Dans votre gestionnaire de base de données habituel (**pgAdmin**, **DBeaver**, ou la console `psql`) :
+```sql
+CREATE DATABASE kortex_defender;
+```
+
+#### Étape 2 : Exécuter les scripts de création et d'initialisation
+Dans le dossier `backend/db/`, deux scripts SQL purs sont fournis :
+1. **`backend/db/schema.sql`** : Crée les 6 tables (`users`, `targets`, `scans`, `transactions`, `notifications`, `referral_requests`) ainsi que les index de performance.
+2. **`backend/db/seed.sql`** : Insère votre compte de test initial `babaaristote6@gmail.com`.
+
+Il vous suffit de copier-coller leur contenu dans pgAdmin / DBeaver et de cliquer sur "Exécuter".
+
+#### Étape 3 : Renseigner votre mot de passe dans `.env`
+Créez un fichier `.env` à la racine :
+```env
+# Mettez le mot de passe de votre utilisateur PostgreSQL local (généralement postgres)
+DATABASE_URL="postgresql://postgres:VOTRE_MOT_DE_PASSE@localhost:5432/kortex_defender"
+```
+
+#### Étape 4 : Lancer le serveur
+```bash
+npm run dev
+# ou séparé : npm run dev:back
+```
+Au démarrage, le serveur teste et valide immédiatement la connexion :
+```text
+🐘 [PostgreSQL] Connecté avec succès à votre base locale ! (Heure serveur: ...)
+```
+
+---
+
+## 9. Annexe Optionnelle : Déploiement Futur en Production (Docker & Prisma)
 
 > ⚠️ **Consultez ce chapitre UNIQUEMENT le jour où vous souhaiterez mettre le projet en ligne sur un serveur de production !**  
 > Pour votre travail en local, vous pouvez ignorer totalement cette section.
 
-Pour brancher plus tard Kortex Defender sur une base PostgreSQL en production :
+Pour préparer plus tard un déploiement conteneurisé sur un serveur cloud :
 
 #### Étape 1 : Démarrer PostgreSQL (via Docker ou service managé)
 ```bash

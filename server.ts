@@ -28,8 +28,10 @@ async function startServer() {
     }
   }
 
-  const server = app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Kortex Defender running on http://0.0.0.0:${PORT}`);
+    const { testPostgresConnection } = await import('./backend/db/postgres.ts');
+    await testPostgresConnection();
   });
 
   server.on('error', (err: any) => {
