@@ -626,9 +626,24 @@ Vous disposez maintenant d'un environnement **Kortex Defender Full-Stack complet
 | Commande | Rôle |
 |---|---|
 | `npm run dev` | Démarre l'environnement Full-Stack (Backend Express + Frontend Vite HMR) sur le port 3000. |
+| `npm run dev:back` | Démarre uniquement le Backend Express API sur le port 5000 (`http://localhost:5000`). |
+| `npm run dev:front` | Démarre uniquement le Frontend React Vite sur le port 5173 (`http://localhost:5173`) avec proxy auto vers le port 5000. |
+| `npm test` | Exécute la suite complète de tests unitaires automatisés dans `tests/` (Auth, Cibles, Scans, Crédits, Misc). |
 | `npm run build` | Compile le frontend React et Tailwind dans le dossier de production `/dist`. |
 | `npm run lint` | Lance la vérification stricte des types TypeScript sur tout le projet (`tsc --noEmit`). |
 | `npm start` | Démarre le serveur autonome de production Node.js. |
+
+### 📬 Collection de Requêtes d'API (Postman, Insomnia, Bruno)
+Le fichier `kortex_defender_api_collection.json` à la racine contient l'ensemble des requêtes prêtes à être importées dans Postman, Insomnia ou Bruno avec exemples de payload pour chaque route `/api/v1/*`.
+
+### 🧪 Suite de Tests Unitaires (`tests/`)
+Le dossier `tests/` contient les tests automatisés :
+- `tests/auth.test.ts` : Inscription, doublons, login, mauvais identifiants, OTP WhatsApp, déconnexion.
+- `tests/targets.test.ts` : CRUD des cibles et bascule d'attestation d'autorisation légale.
+- `tests/scans.test.ts` : Cycle de vie du scan, décompte de crédits, exports HTML et JSON, suppression.
+- `tests/credits.test.ts` : Solde, utilisation des coupons de recharge, historique des transactions.
+- `tests/misc.test.ts` : Profil utilisateur `/me`, notifications et programme d'affiliation Mobile Money.
+- `tests/run-tests.ts` : Lanceur central des tests avec bilan chronométré.
 
 ---
 

@@ -1,0 +1,459 @@
+{
+  "info": {
+    "_postman_id": "a987d120-e543-4f91-8742-kortex-defender",
+    "name": "Kortex Defender - API Collection v1",
+    "description": "Collection complète de toutes les routes de l'API Kortex Defender (/api/v1/).\nCompatible avec Postman, Insomnia, Bruno, Thunder Client et cURL.\n\nVariables d'environnement :\n- baseUrl : http://localhost:5000 (mode backend seul) ou http://localhost:3000 (mode unifié)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "targetId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "scanId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentification (/api/v1/auth)",
+      "item": [
+        {
+          "name": "Connexion (Login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"babaaristote6@gmail.com\",\n  \"password\": \"Cl2even2026\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authentifie l'utilisateur et dépose un cookie HTTP-only `kortex_session`."
+          }
+        },
+        {
+          "name": "Inscription (Register)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nouveau.compte@test.ci\",\n  \"password\": \"SecretPassword2026\",\n  \"phone\": \"+2250700001122\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Crée un nouveau compte et lui attribue 3 scans gratuits de découverte."
+          }
+        },
+        {
+          "name": "Demande de Code OTP (WhatsApp)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+2250152311124\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/send-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "send-otp"]
+            },
+            "description": "Génère un code OTP à 6 chiffres pour la validation de numéro."
+          }
+        },
+        {
+          "name": "Vérification Code OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+2250152311124\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "verify-otp"]
+            },
+            "description": "Valide le code OTP transmis par l'utilisateur."
+          }
+        },
+        {
+          "name": "Déconnexion (Logout)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Supprime le cookie de session kortex_session."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Cibles & Périmètre (/api/v1/targets)",
+      "item": [
+        {
+          "name": "Lister les cibles déclarées",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/targets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "targets"]
+            },
+            "description": "Récupère toutes les cibles associées au compte connecté."
+          }
+        },
+        {
+          "name": "Ajouter une cible (Web, API ou GraphQL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://mon-application.ci\",\n  \"name\": \"Portail Principal CI\",\n  \"target_type\": \"web\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/targets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "targets"]
+            },
+            "description": "Déclare une nouvelle cible avec attestation de propriété."
+          }
+        },
+        {
+          "name": "Obtenir les détails d'une cible",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/targets/{{targetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "targets", "{{targetId}}"]
+            },
+            "description": "Retourne les métadonnées et l'historique d'une cible par son ID."
+          }
+        },
+        {
+          "name": "Basculer l'attestation de propriété",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/targets/{{targetId}}/authorize",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "targets", "{{targetId}}", "authorize"]
+            },
+            "description": "Active ou révoque l'autorisation formelle d'audit sur la cible."
+          }
+        },
+        {
+          "name": "Supprimer une cible",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/targets/{{targetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "targets", "{{targetId}}"]
+            },
+            "description": "Supprime définitivement la cible et tous ses rapports de scan associés."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Scans & Moteur d'Audit (/api/v1/scans)",
+      "item": [
+        {
+          "name": "Lister l'historique des scans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans?status=Tous",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scans"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Tous"
+                },
+                {
+                  "key": "target_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Filtre et liste les scans exécutés ou en cours."
+          }
+        },
+        {
+          "name": "Lancer un nouveau scan d'audit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": \"{{targetId}}\",\n  \"profile\": \"standard\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scans"]
+            },
+            "description": "Déclenche le worker asynchrone pour auditer la cible (profils: fast, standard, deep)."
+          }
+        },
+        {
+          "name": "Consulter l'avancement et le rapport d'un scan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans/{{scanId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scans", "{{scanId}}"]
+            },
+            "description": "Retourne la progression (0 à 100%), le score final, les CVE trouvées et les logs d'exécution."
+          }
+        },
+        {
+          "name": "Télécharger le rapport en HTML autonome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans/{{scanId}}/download?format=html",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scans", "{{scanId}}", "download"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "html"
+                }
+              ]
+            },
+            "description": "Exporte un document HTML autonome auto-contenu infalsifiable."
+          }
+        },
+        {
+          "name": "Télécharger le rapport en JSON brut",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans/{{scanId}}/download?format=json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scans", "{{scanId}}", "download"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                }
+              ]
+            },
+            "description": "Exporte les données structurées pour intégration CI/CD ou SIEM."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Crédits & Recharges (/api/v1/credits)",
+      "item": [
+        {
+          "name": "Consulter mon solde de crédits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/credits/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "credits", "me"]
+            },
+            "description": "Renvoie le nombre de crédits payants, scans gratuits et le barème des profils."
+          }
+        },
+        {
+          "name": "Activer un code coupon de recharge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"STARTER-2026\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/credits/redeem",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "credits", "redeem"]
+            },
+            "description": "Crédite le compte en validant un code coupon (ex: STARTER, PREMIUM, ou KX-XXXX)."
+          }
+        },
+        {
+          "name": "Historique des transactions de crédits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/credits/me/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "credits", "me", "transactions"]
+            },
+            "description": "Historique complet des débits d'audit et des recharges effectuées."
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Profil, Notifications & Parrainage (/api/v1/)",
+      "item": [
+        {
+          "name": "Profil de l'utilisateur connecté",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me"]
+            },
+            "description": "Informations du compte authentifié actuel."
+          }
+        },
+        {
+          "name": "Liste des notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", "me"]
+            },
+            "description": "Historique des alertes de sécurité et notifications d'audit."
+          }
+        },
+        {
+          "name": "Compteur de notifications non lues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/me/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", "me", "unread-count"]
+            },
+            "description": "Nombre de notifications en attente pour la pastille d'alerte."
+          }
+        },
+        {
+          "name": "Marquer toutes les notifications comme lues",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", "read-all"]
+            },
+            "description": "Passe le statut de toutes les notifications à lu."
+          }
+        },
+        {
+          "name": "Statut de ma demande de parrainage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/referrals/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "referrals", "me"]
+            },
+            "description": "Vérifie si la candidature d'affiliation Mobile Money est active ou en attente."
+          }
+        },
+        {
+          "name": "Postuler au programme d'affiliation Mobile Money",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"promoCode\": \"BABA20\",\n  \"fullName\": \"Baba Aristote\",\n  \"operator\": \"Wave\",\n  \"phone\": \"+2250152311124\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/referrals/apply",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "referrals", "apply"]
+            },
+            "description": "Soumet une demande d'affiliation avec coordonnées Mobile Money pour percevoir les commissions de 20%."
+          }
+        }
+      ]
+    }
+  ]
+}

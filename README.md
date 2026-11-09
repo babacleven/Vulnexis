@@ -162,6 +162,38 @@ Tous les endpoints métier sont désormais standardisés sous **`/api/v1/`** et 
 
 ---
 
+## 🧪 Tests Unitaires Automatisés & Collection d'API
+
+### 1. Lancer la Suite de Tests Unitaires (`tests/`)
+Une suite complète de tests automatisés couvre l'ensemble des routes et règles métier (auth, cibles, déduction de crédits, scans, notifications, parrainage).
+
+Pour lancer les tests :
+```bash
+npm test
+```
+*Temps d'exécution ultra-rapide (~0.3 seconde), sans dépendance lourde externe (basé sur Node.js et assertions natives).*
+
+Organisation des tests dans le dossier `tests/` :
+- `tests/auth.test.ts` : Inscription, rejet doublon, connexion, rejet mauvais mot de passe, génération & vérification OTP WhatsApp, déconnexion.
+- `tests/targets.test.ts` : Liste des cibles, création avec validation d'URL, détails, bascule d'autorisation légale (toggle), suppression et 404.
+- `tests/scans.test.ts` : Lancement de scan, décompte de scans gratuits / crédits, rejet cible non attestée (400), rejet solde insuffisant (402), consultation temps réel, export du rapport HTML et JSON, suppression.
+- `tests/credits.test.ts` : Consultation du solde, rechargement par code coupon (`STARTER` +20, `PREMIUM` +60), traçabilité comptable dans l'historique des transactions.
+- `tests/misc.test.ts` : Profil `/api/v1/me`, notifications, compteur non lues, marquage read-all, dépôt de dossier d'affiliation Mobile Money (Wave / OM).
+- `tests/run-tests.ts` : Orchestrateur central avec rapport synthétique en console.
+
+---
+
+### 📬 Collection de Test d'API JSON (`kortex_defender_api_collection.json`)
+Un fichier de collection universel au format standard **Postman Collection v2.1.0** est disponible à la racine du projet :
+- **Fichier** : `kortex_defender_api_collection.json`
+- **Compatible avec** : Postman, Insomnia, Bruno, Hoppscotch, VS Code Thunder Client, et cURL.
+- **Variables intégrées** :
+  - `baseUrl` : `http://localhost:5000` (mode backend) ou `http://localhost:3000` (mode unifié).
+  - `targetId` et `scanId` paramétrables automatiquement.
+- **Dossiers pré-configurés** : 100% des routes `/api/v1/*` avec corps de requête JSON prêts à l'envoi et descriptions didactiques.
+
+---
+
 ## ⚙️ Démarrage 100% Local (Sans Docker, Sans Prisma)
 
 > 💡 **Vous n'avez PAS besoin de Docker, de PostgreSQL ni de Prisma pour développer en local !**  

@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "start": "tsx server.ts",
     "clean": "rm -rf dist server.js",
+    "test": "tsx tests/run-tests.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
