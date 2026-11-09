@@ -1,8 +1,10 @@
 # Feuille de Route Complète : Rendre Kortex Defender 100 % Vivant en Production
 
-Ce document est votre **guide de développement pas-à-pas** pour transformer Kortex Defender d'un prototype avec données en mémoire en une **plateforme de cybersécurité SaaS 100 % vivante, autonome et prête pour la production réelle**.
-
-Chaque étape est expliquée avec les concepts, l'architecture, les fichiers exacts à modifier et les exemples de code TypeScript prêts à l'emploi.
+> 📌 **NOTE IMPORTANTE POUR VOTRE TRAVAIL ACTUEL :**  
+> **Vous n'avez PAS besoin de ce document, ni de Docker, ni de PostgreSQL, ni de Prisma pour travailler en local !**  
+> Le projet fonctionne déjà à 100 % sur votre machine grâce au store autonome `backend/db.ts` pré-rempli avec votre compte.  
+> 
+> **Conservez cette feuille de route pour plus tard :** elle vous servira de guide lorsque vous aurez fini de comprendre et de personnaliser le projet en local et que vous me demanderez de préparer la version pour la mise en ligne (production).
 
 ---
 

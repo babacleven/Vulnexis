@@ -251,49 +251,75 @@ Le fichier `server.ts` situé à la racine du projet sert de **passerelle d'orch
 
 ---
 
-## 8. Guide Pas-à-Pas : Comment Lancer TOUT le Projet avec la Base de Données
+## 8. Guide de Développement 100% Local (Sans Docker, Sans Prisma)
 
-Ce chapitre vous explique exactement comment exécuter l'application selon deux approches :
-1. **Lancement Rapide (Mémoire / État Live Baba Aristote)** : Démarrage en 5 secondes sans installer de logiciel externe.
-2. **Lancement Complet avec PostgreSQL & Prisma** : Connexion à un vrai serveur de base de données relationnelle persistant.
+> 💡 **Le projet est prêt à fonctionner immédiatement en local sans installer de logiciel externe.**  
+> Vous n'avez **PAS** besoin de Docker, de PostgreSQL ni de Prisma pour comprendre, modifier et tester l'application sur votre ordinateur.  
+> Toute la base de données est gérée de manière transparente par le fichier autonome **`backend/db.ts`**.
 
 ---
 
-### Option 1 : Lancement Immédiat (Base en mémoire intégrée)
+### Comment Travailler Tranquillement en Local ?
 
-Le projet supporte 3 modes de lancement selon vos préférences de développement :
-
-#### A. Mode Full-Stack Unifié (Recommandé)
-Lance le frontend et le backend ensemble sur un port unique :
+#### 1. Lancer le projet en une commande (Mode Unifié)
 ```bash
 npm run dev
 ```
-👉 Accessible sur **`http://localhost:3000`**
-
-#### B. Lancer uniquement le Backend
-Lance exclusivement le serveur d'API Express sans l'interface :
-```bash
-npm run dev:back
-```
-👉 Serveur API actif sur **`http://localhost:5000`** (Canonical API : `http://localhost:5000/api/v1/`)
-
-#### C. Lancer uniquement le Frontend
-Lance le client Vite de développement avec proxying automatique vers le backend :
-```bash
-npm run dev:front
-```
-👉 Application client active sur **`http://localhost:5173`** (les requêtes `/api/*` sont automatiquement redirigées vers `http://localhost:5000`)
+👉 Ouvrez votre navigateur sur **`http://localhost:3000`**.  
+Le backend Express et le frontend React tournent ensemble sur le même port.
 
 ---
 
-### Option 2 : Lancement avec une Vraie Base de Données PostgreSQL & Prisma
+#### 2. Ou bien lancer séparément Backend et Frontend (2 terminaux)
 
-Pour brancher Kortex Defender sur une véritable base de données PostgreSQL de production, suivez ce guide étape par étape.
+Si vous préférez travailler avec les deux briques séparées :
 
-#### Étape 1 : Démarrer une instance PostgreSQL
+* **Dans le Terminal 1 (Backend API seul) :**
+  ```bash
+  npm run dev:back
+  ```
+  👉 L'API Express démarre sur **`http://localhost:5000`** (routes `/api/v1/*`).
 
-Vous pouvez lancer PostgreSQL localement via **Docker** en une seule commande :
+* **Dans le Terminal 2 (Frontend Client seul) :**
+  ```bash
+  npm run dev:front
+  ```
+  👉 L'interface client démarre sur **`http://localhost:5173`**.  
+  Le serveur Vite redirige automatiquement toutes les requêtes d'API vers le port 5000 grâce au proxy configuré dans `vite.config.ts`.
 
+---
+
+### 🗄️ Comment est gérée la Base de Données en Local (`backend/db.ts`) ?
+
+En local, le fichier **`backend/db.ts`** agit comme votre base de données locale autonome :
+
+```typescript
+// backend/db.ts
+export const DB = {
+  users: [...],         // Contient votre compte babaaristote6@gmail.com
+  targets: [...],       // Stocke vos cibles ajoutées
+  scans: [...],         // Stocke vos rapports de vulnérabilités
+  transactions: [...],  // Gère vos crédits et scans gratuits
+  notifications: [...], // Historique de vos alertes
+  referralRequests: []  // Demandes de parrainage
+};
+```
+
+#### Avantages pour votre apprentissage :
+1. **Zéro configuration** : Aucun mot de passe de base de données à gérer, aucun service Windows ou conteneur à surveiller.
+2. **Inspection directe** : Vous pouvez ouvrir `backend/db.ts` et voir exactement la structure des données en JSON/TypeScript.
+3. **Personnalisation immédiate** : Vous pouvez changer le solde de crédits (`credits: 100`) ou ajouter une fausse cible directement dans le fichier pour tester instantanément sans taper de requêtes SQL.
+
+---
+
+## 9. Annexe Optionnelle : Déploiement Futur en Production (PostgreSQL, Docker & Prisma)
+
+> ⚠️ **Consultez ce chapitre UNIQUEMENT le jour où vous souhaiterez mettre le projet en ligne sur un serveur de production !**  
+> Pour votre travail en local, vous pouvez ignorer totalement cette section.
+
+Pour brancher plus tard Kortex Defender sur une base PostgreSQL en production :
+
+#### Étape 1 : Démarrer PostgreSQL (via Docker ou service managé)
 ```bash
 docker run --name kortex-postgres \
   -e POSTGRES_USER=kortex \
@@ -303,7 +329,7 @@ docker run --name kortex-postgres \
   -d postgres:16-alpine
 ```
 
-*(Ou bien utilisez un service managé comme Cloud SQL, Supabase, Neon ou Aiven).*
+*(Ou utilisez un service cloud managé comme Cloud SQL, Supabase ou Neon).*
 
 #### Étape 2 : Configurer les Variables d'Environnement
 

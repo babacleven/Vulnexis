@@ -162,78 +162,65 @@ Tous les endpoints métier sont désormais standardisés sous **`/api/v1/`** et 
 
 ---
 
-## ⚙️ Installation & Lancement du Projet
+## ⚙️ Démarrage 100% Local (Sans Docker, Sans Prisma)
 
-### Pré-requis
-- **Node.js** version 18.0.0 ou supérieure.
-- **npm** version 9.0.0 ou supérieure.
+> 💡 **Vous n'avez PAS besoin de Docker, de PostgreSQL ni de Prisma pour développer en local !**  
+> Le projet intègre sa propre base de données locale autonome dans `backend/db.ts`. Elle est prête à l'emploi et pré-remplie avec votre compte de test (`babaaristote6@gmail.com`, mot de passe `Cl2even2026`).
 
----
-
-### Option 1 : Démarrage Rapide (Base en mémoire immédiate)
-
-Le projet contient un store typé pré-rempli avec votre compte de référence (`babaaristote6@gmail.com`, 0 crédit, 2 scans gratuits restants, cibles vides).
-
+### 1. Installation des dépendances
+Dans le dossier du projet :
 ```bash
-# 1. Cloner et installer les dépendances
 npm install
-
-# Astuce : Si npm signale un avertissement de peer-dependencies sur votre machine :
-# npm install --legacy-peer-deps
-
-# 2. Démarrer le serveur full-stack Express + Vite
-npm run dev
 ```
-
-L'application est disponible immédiatement sur : **`http://localhost:3000`**.
 
 ---
 
-### Option 2 : Démarrage avec une Vraie Base de Données PostgreSQL & Prisma
+### 2. Lancement au choix (3 modes de travail)
 
-Pour exécuter Kortex Defender avec une véritable base de données relationnelle persistante :
-
-#### 1. Lancer PostgreSQL localement avec Docker
+#### Mode A : Full-Stack Unifié (Le plus simple, 1 seul terminal)
+Lance l'interface React et l'API Express ensemble sur un port unique :
 ```bash
-docker run --name kortex-postgres \
-  -e POSTGRES_USER=kortex \
-  -e POSTGRES_PASSWORD=kortex_secret_2026 \
-  -e POSTGRES_DB=kortex_defender \
-  -p 5432:5432 \
-  -d postgres:16-alpine
-```
-
-#### 2. Configurer le fichier `.env`
-Créez ou modifiez le fichier `.env` à la racine :
-```env
-DATABASE_URL="postgresql://kortex:kortex_secret_2026@localhost:5432/kortex_defender?schema=public"
-PORT=3000
-APP_URL="http://localhost:3000"
-```
-
-#### 3. Installer Prisma & initialiser la base
-```bash
-npm install @prisma/client
-npm install -D prisma
-
-# Générer les tables relationnelles
-npx prisma migrate dev --name init_kortex_db
-```
-
-#### 4. Lancer l'application
-
-Le projet supporte 3 modes d'exécution :
-
-```bash
-# Mode 1 : Full-stack unifié (Frontend + Backend sur http://localhost:3000)
 npm run dev
+```
+👉 Ouvrez votre navigateur sur : **`http://localhost:3000`**
 
-# Mode 2 : Lancer UNIQUEMENT le Backend (API Express sur http://localhost:5000)
+---
+
+#### Mode B : Séparé — Lancer uniquement le Backend (Port 5000)
+Dans un premier terminal, lance exclusivement l'API Express :
+```bash
 npm run dev:back
+```
+👉 Serveur API disponible sur : **`http://localhost:5000`**  
+👉 Endpoints canoniques : `http://localhost:5000/api/v1/`
 
-# Mode 3 : Lancer UNIQUEMENT le Frontend (Vite client sur http://localhost:5173 avec proxying /api)
+---
+
+#### Mode C : Séparé — Lancer uniquement le Frontend (Port 5173)
+Dans un second terminal, lance l'application client Vite :
+```bash
 npm run dev:front
 ```
+👉 Application client disponible sur : **`http://localhost:5173`**  
+*(Vite redirige automatiquement toutes les requêtes `/api/*` vers le backend sur `http://localhost:5000` grâce au proxy intégré).*
+
+---
+
+### 🗄️ Comment fonctionne la Base de Données Locale ?
+
+Le fichier **`backend/db.ts`** agit comme votre base de données locale instantanée :
+* **Utilisateurs** (`DB.users`) : Contient votre compte `babaaristote6@gmail.com`.
+* **Cibles** (`DB.targets`) : Stocke vos URLs et applications ajoutées en cours de session.
+* **Scans** (`DB.scans`) : Enregistre vos audits avec leurs vulnérabilités détaillées.
+* **Transactions & Crédits** (`DB.transactions`) : Gère vos crédits et vos scans gratuits.
+* **Notifications** (`DB.notifications`) : Historique des alertes système.
+
+Vous pouvez modifier directement les données de départ dans `backend/db.ts` pour tester différents scénarios sans jamais avoir à taper de commandes SQL ou à lancer un conteneur.
+
+---
+
+> 🚀 **Note sur la Production (PostgreSQL, Docker, Prisma)** :  
+> Ces outils sont réservés pour le déploiement final sur un serveur cloud distant. Ils sont détaillés dans [`FEUILLE_DE_ROUTE_PRODUCTION.md`](./FEUILLE_DE_ROUTE_PRODUCTION.md). Vous pouvez les ignorer totalement tant que vous travaillez en local.
 
 ---
 
