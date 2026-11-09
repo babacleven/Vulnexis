@@ -1,16 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Logo, IconCheck, IconArrowRight } from '../components/Icons';
 
 interface LandingPageProps {
   onNavigate: (path: string) => void;
   authed?: boolean;
 }
 
+interface LogEntry {
+  id: number;
+  time: string;
+  tag: 'system' | 'agent' | 'logic';
+  tagLabel: string;
+  msg: string;
+  isOk?: boolean;
+}
+
 export function LandingPage({ onNavigate, authed }: LandingPageProps) {
   const [scrolled, setScrolled] = useState(false);
-  const [activePhase, setActivePhase] = useState(0);
-  const [scanStatus, setScanStatus] = useState('En cours');
-  const [progressWidth, setProgressWidth] = useState(25);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Live execution log stream
+  const [logs, setLogs] = useState<LogEntry[]>([
+    { id: 1, time: '02:14:08', tag: 'system', tagLabel: '[SYS]', msg: 'Consensus verified across 48 edge nodes', isOk: true },
+    { id: 2, time: '02:14:09', tag: 'agent', tagLabel: '[AGT]', msg: 'agent-04 rebalanced egress queue in us-east-2' },
+    { id: 3, time: '02:14:11', tag: 'logic', tagLabel: '[LOG]', msg: 'P99 threshold tuned: 14ms -> 8.2ms' },
+    { id: 4, time: '02:14:12', tag: 'agent', tagLabel: '[AGT]', msg: 'Cert rotated for mesh.internal (SHA-384)' },
+    { id: 5, time: '02:14:14', tag: 'system', tagLabel: '[SYS]', msg: 'Kafka broker memory reclaimed, GC 0ms', isOk: true }
+  ]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,600 +35,747 @@ export function LandingPage({ onNavigate, authed }: LandingPageProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Hero interactive simulation cycle
+  // Timer to append log lines like the real template
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActivePhase((prev) => {
-        const next = (prev + 1) % 4;
-        setProgressWidth((next + 1) * 25);
-        if (next === 3) {
-          setScanStatus('Terminé');
-        } else {
-          setScanStatus('En cours');
-        }
-        return next;
+    const streamItems: { tag: 'system' | 'agent' | 'logic'; tagLabel: string; msg: string; isOk?: boolean }[] = [
+      { tag: 'agent', tagLabel: '[AGT]', msg: 'Auto-scaled worker pool in eu-west-1 (replica 12 -> 8)' },
+      { tag: 'logic', tagLabel: '[LOG]', msg: 'BGP peering path optimized via Frankfurt IX (rtt -18ms)' },
+      { tag: 'system', tagLabel: '[SYS]', msg: 'Database read replica sync delta: 0ms lag', isOk: true },
+      { tag: 'agent', tagLabel: '[AGT]', msg: 'Security rule synthesis blocked unauthorized RPC vector' },
+      { tag: 'logic', tagLabel: '[LOG]', msg: 'Canary deployment v2.18 evaluated: error rate 0.00%', isOk: true },
+      { tag: 'system', tagLabel: '[SYS]', msg: 'eBPF probe telemetry stream healthy on all hosts', isOk: true }
+    ];
+
+    let count = 6;
+    const interval = setInterval(() => {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      const item = streamItems[Math.floor(Math.random() * streamItems.length)];
+
+      setLogs((prev) => {
+        const next = [...prev, { id: count++, time: timeStr, ...item }];
+        return next.slice(-5);
       });
-    }, 2800);
-    return () => clearInterval(timer);
+    }, 1800);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const steps = [
-    {
-      n: '01',
-      title: 'Ajoutez votre application',
-      text: 'L’URL de votre site, de votre API ou de votre endpoint GraphQL. Vous attestez être autorisé à la tester.',
-    },
-    {
-      n: '02',
-      title: 'Lancez le scan',
-      text: 'Reconnaissance, empreinte, vulnérabilités connues, TLS, en-têtes, secrets exposés : tout s’enchaîne automatiquement.',
-    },
-    {
-      n: '03',
-      title: 'Corrigez en priorité',
-      text: 'Chaque faille est expliquée en français, classée par gravité, avec le correctif à appliquer.',
-    },
-  ];
-
-  const features = [
-    {
-      title: 'Cartographie',
-      text: 'Sous-domaines, services exposés, technologies détectées : votre surface d’attaque vue de l’extérieur.',
-    },
-    {
-      title: 'Vulnérabilités web',
-      text: 'Failles connues, mauvaises configurations, fichiers sensibles accessibles publiquement.',
-    },
-    {
-      title: 'Chiffrement & en-têtes',
-      text: 'Certificats, protocoles TLS, HSTS, CSP, cookies : les protections de base, vérifiées.',
-    },
-    {
-      title: 'Secrets exposés',
-      text: 'Clés d’API et jetons oubliés dans le JavaScript servi aux visiteurs.',
-    },
-    {
-      title: 'API & GraphQL',
-      text: 'Découverte des spécifications et des endpoints, contrôles d’exposition.',
-    },
-    {
-      title: 'Analyse IA en français',
-      text: 'Un score, une synthèse et des recommandations lisibles par toute l’équipe.',
-    },
-  ];
-
-  const plans = [
-    {
-      name: 'Free',
-      tag: 'Découverte',
-      price: '0 FCFA',
-      note: 'Les 3 scans gratuits sont utilisables une seule fois par compte.',
-      items: [
-        '3 scans de découverte gratuits par compte',
-        'Résultats essentiels dans le dashboard',
-        'Aucun rapport téléchargeable',
-        'Aucune alerte de surveillance',
-      ],
-      btnText: 'Commencer',
-    },
-    {
-      name: 'Essentiel',
-      tag: 'Pour essayer',
-      price: '1 000 FCFA',
-      note: 'Les crédits achetés n’expirent pas.',
-      items: [
-        '10 crédits Kortex Defender',
-        'Rapports de sécurité détaillés',
-        'Idéal pour un premier audit complet',
-      ],
-      btnText: 'Choisir',
-    },
-    {
-      name: 'Starter',
-      tag: 'Paiement à l’utilisation',
-      price: '2 000 FCFA',
-      note: 'Les crédits achetés n’expirent pas.',
-      items: [
-        '20 crédits Kortex Defender',
-        'Rapports de sécurité détaillés',
-        'Alertes sur les nouvelles vulnérabilités',
-        'Notifications dashboard et email',
-      ],
-      btnText: 'Choisir',
-    },
-    {
-      name: 'Premium',
-      tag: 'Offre recommandée',
-      price: '5 000 FCFA / mois',
-      highlight: true,
-      note: 'Crédits valables 30 jours à partir du paiement (renouvellement manuel).',
-      items: [
-        '60 crédits mensuels',
-        'Surveillance planifiée d’un domaine',
-        'Rapports détaillés et historique',
-        'Alertes WhatsApp, email et dashboard',
-        'Priorité dans la file de scans',
-      ],
-      btnText: 'Choisir',
-    },
-    {
-      name: 'Premium Plus',
-      tag: 'Sur devis',
-      price: 'Tarif personnalisé',
-      note: 'Chaque devis précise le périmètre, les quotas et le support.',
-      items: [
-        'Plusieurs domaines ou applications',
-        'Quotas de crédits personnalisés',
-        'Audits avancés selon le périmètre autorisé',
-        'Collaboration multi-utilisateurs',
-      ],
-      btnText: 'Nous contacter',
-    },
-  ];
-
-  const circuitPaths = [
-    'M0 120 H220 L270 70 H420',
-    'M0 200 H160 L220 260 H380 L420 220',
-    'M1200 90 H980 L930 140 H800',
-    'M1200 260 H1040 L990 210 H860',
-    'M0 420 H120 L180 360 H300',
-    'M1200 440 H1080 L1020 500 H900',
-    'M600 0 V60 L650 110 V180',
-    'M560 560 V500 L520 460 V400',
-  ];
-
-  const circuitCircles = [
-    [420, 70],
-    [420, 220],
-    [800, 140],
-    [860, 210],
-    [300, 360],
-    [900, 500],
-    [650, 180],
-    [520, 400],
-  ];
-
   return (
-    <div className="overflow-x-hidden bg-white text-kx-text">
-      {/* Fixed Header */}
-      <header
-        className={`fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300 ${
-          scrolled ? 'nav-scrolled' : 'border-transparent bg-white/70 backdrop-blur-xs'
-        }`}
-      >
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-4 sm:gap-6 sm:px-8">
-          <button
-            onClick={() => onNavigate('/')}
-            className="shrink-0 text-left focus:outline-hidden"
-            aria-label="Kortex Defender"
+    <>
+      {/* ---------- Global dashed engineering grid ---------- */}
+      <div className="bg-base" aria-hidden="true">
+        <div className="grid-v" />
+        <div className="grid-h" />
+        <div className="grid-dots" />
+      </div>
+
+      {/* ---------- NAV (Fixed 72px) ---------- */}
+      <nav className={`nav ${scrolled ? 'scrolled' : ''}`}>
+        <div className="rail nav-inner">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="brand"
           >
-            <Logo size="md" />
-          </button>
+            <div className="brand-glyph" />
+            <span className="brand-word">HALCYON</span>
+          </a>
 
-          <nav className="ml-6 hidden gap-6 text-sm text-kx-muted md:flex" aria-label="Sections">
-            <a href="#fonctionnement" className="hover:text-black transition">
-              Fonctionnement
-            </a>
-            <a href="#fonctionnalites" className="hover:text-black transition">
-              Fonctionnalités
-            </a>
-            <a href="#tarifs" className="hover:text-black transition">
-              Tarifs
-            </a>
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2">
-            {authed ? (
-              <button
-                onClick={() => onNavigate('/dashboard')}
-                className="btn px-4 sm:px-5"
-              >
-                Accéder au dashboard
+          <div className="nav-links">
+            <div className="nav-item has-mega">
+              <button className="nav-link" type="button">
+                Platform
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => onNavigate('/login')}
-                  className="hidden rounded-full px-4 py-2 text-sm font-medium hover:bg-kx-panel2 sm:inline-flex transition"
-                >
-                  Connexion
-                </button>
-                <button
-                  onClick={() => onNavigate('/register')}
-                  className="btn whitespace-nowrap px-4 sm:px-5"
-                >
-                  Essai gratuit
-                </button>
-              </>
-            )}
+
+              {/* Hover-reveal Mega Menu */}
+              <div className="mega">
+                <div className="mega-inner">
+                  <div className="mega-feature">
+                    <div className="mega-feature-vis">
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                    <h5>Autonomous Consensus</h5>
+                    <p>Distributed Raft engine managing zero-touch operations across your fleet.</p>
+                    <span className="mega-feature-cta">Explore Architecture →</span>
+                  </div>
+
+                  <div className="mega-cols">
+                    <div className="mega-col">
+                      <h6>Engine</h6>
+                      <a href="#features">
+                        <strong>Execution Fabrics</strong>
+                        <span>Zero-overhead agent runtime</span>
+                      </a>
+                      <a href="#how">
+                        <strong>Raft Consensus</strong>
+                        <span>Distributed cluster state</span>
+                      </a>
+                      <a href="#features">
+                        <strong>eBPF Probing</strong>
+                        <span>Kernel-level telemetry</span>
+                      </a>
+                    </div>
+                    <div className="mega-col">
+                      <h6>Reliability</h6>
+                      <a href="#features">
+                        <strong>Self-Healing</strong>
+                        <span>Automated closed loops</span>
+                      </a>
+                      <a href="#features">
+                        <strong>Policy Guardrails</strong>
+                        <span>Deterministic OPA bounds</span>
+                      </a>
+                      <a href="#pricing">
+                        <strong>Enterprise SLA</strong>
+                        <span>99.999% availability</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <a href="#features" className="nav-link">Agents</a>
+            <a href="#pricing" className="nav-link">Pricing</a>
+            <a href="#how" className="nav-link">Docs</a>
           </div>
+
+          <div className="nav-cta">
+            <a
+              href="/login"
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate('/login');
+              }}
+              className="ghost-link"
+            >
+              Sign In
+            </a>
+            <a
+              href="/register"
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate('/register');
+              }}
+              className="btn btn-solid roll"
+            >
+              <span className="roll-stack">
+                <span>Get Started</span>
+                <span>Deploy Mesh</span>
+              </span>
+            </a>
+          </div>
+
+          <button
+            className={`hamburger ${mobileMenuOpen ? 'open' : ''}`}
+            type="button"
+            aria-label="Toggle navigation"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <span />
+            <span />
+          </button>
         </div>
-      </header>
+      </nav>
 
-      {/* Hero Section */}
-      <section className="relative isolate pb-24 pt-32 sm:pt-40">
-        <div className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[520px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-br from-zinc-200 via-zinc-100 to-transparent opacity-80 blur-3xl" />
-
-        {/* SVG Circuit Background */}
-        <svg
-          viewBox="0 0 1200 560"
-          preserveAspectRatio="xMidYMid slice"
-          className="circuit pointer-events-none absolute inset-x-0 top-10 -z-10 mx-auto h-[560px] w-full max-w-6xl text-zinc-300"
-          aria-hidden="true"
+      {/* Mobile Menu */}
+      <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        <a href="#features" onClick={() => setMobileMenuOpen(false)}>Agents</a>
+        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+        <a href="#how" onClick={() => setMobileMenuOpen(false)}>Docs</a>
+        <a
+          href="/login"
+          onClick={(e) => {
+            e.preventDefault();
+            setMobileMenuOpen(false);
+            onNavigate('/login');
+          }}
         >
-          <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {circuitPaths.map((d, i) => (
-              <path key={i} d={d} />
-            ))}
-          </g>
-          <g fill="currentColor">
-            {circuitCircles.map(([cx, cy], i) => (
-              <circle key={i} cx={cx} cy={cy} r="6" />
-            ))}
-          </g>
-        </svg>
+          Sign In
+        </a>
+        <a
+          href="/register"
+          onClick={(e) => {
+            e.preventDefault();
+            setMobileMenuOpen(false);
+            onNavigate('/register');
+          }}
+          className="btn btn-solid"
+        >
+          Get Started
+        </a>
+      </div>
 
-        <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-8 lg:grid-cols-[1.1fr_1fr]">
-          <div className="min-w-0">
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-kx-border bg-white px-3.5 py-1.5 text-xs font-medium shadow-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-black" />
-              Audit de sécurité web &amp; API, en self-service
-            </p>
+      <main>
+        {/* ---------- HERO SECTION ---------- */}
+        <section className="hero">
+          <div className="rail hero-inner">
+            <div className="hero-copy">
+              <span className="eyebrow">Autonomous Ops · Now in GA</span>
+              <h1 className="hero-h1">
+                Deploy autonomous agents that run your operations while you sleep.
+              </h1>
+              <p className="hero-sub">
+                Self-healing incident loops, proactive infrastructure balancing, and zero-touch deployments orchestrated across your entire distributed cloud.
+              </p>
 
-            <h1 className="break-words font-display text-[2.1rem] font-semibold leading-[1.06] tracking-tight sm:text-6xl lg:text-7xl">
-              <span>Trouvez vos failles </span>
-              <span className="text-zinc-400">avant les attaquants.</span>
-            </h1>
+              <div className="hero-actions center">
+                <a
+                  href="/register"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate('/register');
+                  }}
+                  className="btn btn-solid roll"
+                >
+                  <span className="roll-stack">
+                    <span>Start Free Trial</span>
+                    <span>Launch Control Mesh</span>
+                  </span>
+                </a>
+                <a
+                  href="/login"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate('/login');
+                  }}
+                  className="btn btn-ghost"
+                >
+                  Explore Live Demo
+                </a>
+              </div>
 
-            <p className="mt-6 max-w-xl text-lg text-kx-muted">
-              Kortex Defender analyse vos sites et vos API, détecte les vulnérabilités et vous explique, en français, quoi corriger en priorité.
-            </p>
+              <div className="hero-trustline">
+                <span className="dot-live" />
+                <span>Consensus locked across 48 edge nodes</span>
+              </div>
+            </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => onNavigate(authed ? '/scans/new' : '/register')}
-                className="btn w-full px-5 py-3 text-sm sm:w-auto sm:px-6 sm:text-base"
+            {/* DASHBOARD MOCKUP */}
+            <div className="dash-wrap">
+              <div className="dash-glow" aria-hidden="true">
+                <div className="glow-grid" />
+                <div className="glow-aura glow-teal" />
+                <div className="glow-aura glow-core" />
+                <div className="glow-aura glow-violet" />
+                <div className="glow-flare" />
+              </div>
+
+              <div className="dash-rim" />
+
+              <div className="dash">
+                {/* Dashboard Left Sidebar */}
+                <aside className="dash-side">
+                  <div className="dash-logo">
+                    <div className="dash-logo-mark" />
+                    <span className="dash-logo-word">CONTROL</span>
+                  </div>
+
+                  <nav className="dash-nav">
+                    <div className="dash-navitem active">
+                      <svg viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                      </svg>
+                      <i>Overview</i>
+                    </div>
+                    <div className="dash-navitem">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                      <i>Active Agents</i>
+                    </div>
+                    <div className="dash-navitem">
+                      <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                      </svg>
+                      <i>Live Mesh</i>
+                    </div>
+                    <div className="dash-navitem">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                      </svg>
+                      <i>Audit Logs</i>
+                    </div>
+                    <div className="dash-navitem">
+                      <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                      </svg>
+                      <i>Settings</i>
+                    </div>
+                  </nav>
+
+                  <div className="dash-side-foot">
+                    <div className="dash-orb" />
+                    <div>
+                      <strong>Cluster 01</strong>
+                      <span>eu-central · active</span>
+                    </div>
+                  </div>
+                </aside>
+
+                {/* Dashboard Main Area */}
+                <div className="dash-main">
+                  <div className="dash-head">
+                    <div className="dash-crumb">
+                      cluster-01 / <b>eu-central</b> / <i>mesh-runtime</i>
+                    </div>
+                    <div className="dash-status">
+                      <span className="pulse" />
+                      <span>Online</span>
+                    </div>
+                  </div>
+
+                  <div className="dash-body">
+                    {/* Row 2: Objectives & Live Execution Log */}
+                    <div className="dash-row2">
+                      <div className="dash-card">
+                        <h4>System Objectives</h4>
+                        <p>
+                          Target: <span className="accent">Zero-toil incident loop</span>
+                        </p>
+                        <ul>
+                          <li>
+                            <span className="arr">→</span>
+                            <span>Auto-drain unhealthy canary pods</span>
+                          </li>
+                          <li>
+                            <span className="arr">→</span>
+                            <span>Dynamic latency-aware egress routing</span>
+                          </li>
+                          <li>
+                            <span className="arr">→</span>
+                            <span>Proactive Kafka partition rebalancing</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="dash-card dash-log">
+                        <h4>Live Execution Log</h4>
+                        <div className="log-stream">
+                          {logs.map((log) => (
+                            <div key={log.id} className="log-line">
+                              <span className="log-time">{log.time}</span>
+                              <span className={`log-tag ${log.tag}`}>{log.tagLabel}</span>
+                              <span className={`log-msg ${log.isOk ? 'ok' : ''}`}>{log.msg}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Metrics 3-Up Row */}
+                    <div className="dash-metrics">
+                      <div className="metric">
+                        <b>99.994%</b>
+                        <span>Mesh Availability</span>
+                      </div>
+                      <div className="metric">
+                        <b>14.2k</b>
+                        <span>Autonomous Ops / Day</span>
+                      </div>
+                      <div className="metric">
+                        <b>&lt; 8ms</b>
+                        <span>P99 Telemetry Latency</span>
+                      </div>
+                    </div>
+
+                    {/* Audit History List */}
+                    <div className="dash-audit">
+                      <div className="audit-head">
+                        <span>Audit History</span>
+                        <i>Past 60 min</i>
+                      </div>
+                      <div className="audit-row">
+                        <span className="adot teal" />
+                        <p>Rebalanced egress partition queue in us-east-2</p>
+                        <i>Just now</i>
+                      </div>
+                      <div className="audit-row">
+                        <span className="adot violet" />
+                        <p>Rotated mTLS certificates for service mesh</p>
+                        <i>4m ago</i>
+                      </div>
+                      <div className="audit-row">
+                        <span className="adot" />
+                        <p>Auto-scaled worker pool to meet ingress spike</p>
+                        <i>18m ago</i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- TRUST MARQUEE ---------- */}
+        <section className="trust">
+          <div className="rail">
+            <div className="trust-inner">
+              <div className="trust-head">Trusted by engineering teams</div>
+              <div className="marquee">
+                <div className="marquee-track">
+                  <span>VORTEX SYSTEMS</span>
+                  <span>KINSHIP AI</span>
+                  <span>APEX LABS</span>
+                  <span>KRONOS CLOUD</span>
+                  <span>STRATA SCALE</span>
+                  <span>SYNTHEX</span>
+                  <span>HYPERION DATA</span>
+                  <span>VORTEX SYSTEMS</span>
+                  <span>KINSHIP AI</span>
+                  <span>APEX LABS</span>
+                  <span>KRONOS CLOUD</span>
+                  <span>STRATA SCALE</span>
+                  <span>SYNTHEX</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- FEATURE GRID ("ONE MESH, EVERY WORKFLOW") ---------- */}
+        <section className="features" id="features">
+          <div className="rail">
+            <div className="sec-head">
+              <span className="eyebrow">Engineered for Autonomy</span>
+              <h2>One mesh, every workflow.</h2>
+              <p>Consolidate fragmented scripts into deterministic, cryptographic closed loops.</p>
+            </div>
+
+            <div className="feat-grid">
+              {/* Wide Feature Card with Node Graph SVG */}
+              <div className="feat-card feat-wide">
+                <div className="feat-vis">
+                  <svg className="node-graph" viewBox="0 0 600 150">
+                    <g className="edges">
+                      <line x1="60" y1="75" x2="200" y2="45" stroke="rgba(22, 224, 198, 0.3)" strokeDasharray="4 4" />
+                      <line x1="200" y1="45" x2="360" y2="105" stroke="rgba(22, 224, 198, 0.3)" strokeDasharray="4 4" />
+                      <line x1="360" y1="105" x2="520" y2="60" stroke="rgba(22, 224, 198, 0.3)" strokeDasharray="4 4" />
+                    </g>
+                    <g className="nodes">
+                      <circle cx="60" cy="75" r="7" />
+                      <circle cx="200" cy="45" r="9" />
+                      <circle cx="360" cy="105" r="9" fill="#8b5cf6" />
+                      <circle cx="520" cy="60" r="7" />
+                    </g>
+                  </svg>
+                </div>
+                <div className="feat-meta">
+                  <span className="feat-ico">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 12 12 22 22 12 12 2" />
+                    </svg>
+                  </span>
+                  <h3>Continuous Graph Topology &amp; Consensus</h3>
+                  <p>Distributed agents synchronize via lightweight Raft consensus. When nodes degrade, routing heals in sub-seconds.</p>
+                </div>
+              </div>
+
+              {/* Card 2 */}
+              <div className="feat-card">
+                <span className="feat-ico">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                </span>
+                <h3>eBPF Kernel Probing</h3>
+                <p>Extract deep system telemetry without sidecars or runtime overhead. Direct socket filtering at wire speed.</p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="feat-card">
+                <span className="feat-ico">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </span>
+                <h3>Cryptographic Ledger</h3>
+                <p>Every automated action is hashed and recorded in a tamper-proof audit chain with full rollback guarantees.</p>
+              </div>
+
+              {/* Card 4 */}
+              <div className="feat-card">
+                <span className="feat-ico">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </span>
+                <h3>Policy-as-Code Limits</h3>
+                <p>Strict OPA / Rego contracts prevent runaway loops. Hard limits on blast radius and destructive mutations.</p>
+              </div>
+
+              {/* Card 5 */}
+              <div className="feat-card">
+                <span className="feat-ico">
+                  <svg viewBox="0 0 24 24">
+                    <polyline points="16 18 22 12 16 6" />
+                    <polyline points="8 6 2 12 8 18" />
+                  </svg>
+                </span>
+                <h3>Native CI/CD Sync</h3>
+                <p>Automate promotion gates, canary rollouts, and rollback triggers straight from your existing Git repositories.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- HOW IT WORKS ---------- */}
+        <section className="how" id="how">
+          <div className="rail">
+            <div className="sec-head">
+              <span className="eyebrow">Deterministic Execution</span>
+              <h2>Connect. Orchestrate. Autonomous.</h2>
+              <p>Three predictable stages to transition from manual toil to autonomous reliability.</p>
+            </div>
+
+            <div className="steps">
+              <div className="step-line" />
+              <div className="step">
+                <div className="step-node">01</div>
+                <h3>Connect</h3>
+                <p>Install the lightweight agent across your clusters. Discovery completes in under 60 seconds.</p>
+              </div>
+              <div className="step">
+                <div className="step-node">02</div>
+                <h3>Orchestrate</h3>
+                <p>Specify operational intents and SLA boundaries. The engine compiles rules into distributed state graphs.</p>
+              </div>
+              <div className="step">
+                <div className="step-node">03</div>
+                <h3>Autonomous</h3>
+                <p>Agents observe, predict, and auto-heal failures 24/7 without opening incident bridges.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- STATS BAND ---------- */}
+        <section className="stats">
+          <div className="rail">
+            <div className="stats-inner">
+              <div className="stat">
+                <b>4.8M+</b>
+                <span>Ops / Month</span>
+              </div>
+              <div className="stat">
+                <b>&lt; 1.2s</b>
+                <span>Mean MTTR</span>
+              </div>
+              <div className="stat">
+                <b>99.999%</b>
+                <span>Policy Fidelity</span>
+              </div>
+              <div className="stat">
+                <b>0</b>
+                <span>Runbook Pages</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- PRICING ---------- */}
+        <section className="pricing" id="pricing">
+          <div className="rail">
+            <div className="sec-head">
+              <span className="eyebrow">Predictable Scale</span>
+              <h2>Transparent, usage-aligned tiers.</h2>
+              <p>Start in development for free. Scale to global multi-cloud clusters seamlessly.</p>
+            </div>
+
+            <div className="price-grid">
+              {/* Starter */}
+              <div className="price-card">
+                <h3>Starter</h3>
+                <div className="price">
+                  <b>$0</b>
+                  <span>/ mo</span>
+                </div>
+                <p className="price-desc">Ideal for staging environments and evaluating automated closed loops.</p>
+                <ul>
+                  <li>Up to 3 clusters</li>
+                  <li>10,000 ops / month</li>
+                  <li>Community Discord support</li>
+                </ul>
+                <a
+                  href="/register"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate('/register');
+                  }}
+                  className="btn btn-ghost full"
+                >
+                  Start Free
+                </a>
+              </div>
+
+              {/* Scale (Highlighted) */}
+              <div className="price-card highlight">
+                <span className="pop-pill">Most Popular</span>
+                <h3>Scale</h3>
+                <div className="price">
+                  <b>$490</b>
+                  <span>/ mo</span>
+                </div>
+                <p className="price-desc">For growing production fleets demanding continuous self-healing.</p>
+                <ul>
+                  <li>Unlimited nodes &amp; clusters</li>
+                  <li>500,000 ops / month</li>
+                  <li>eBPF telemetry streaming</li>
+                  <li>99.99% SLA guarantee</li>
+                </ul>
+                <a
+                  href="/register"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate('/register');
+                  }}
+                  className="btn btn-solid full roll"
+                >
+                  <span className="roll-stack">
+                    <span>Deploy Scale Tier</span>
+                    <span>Start 14-Day Trial</span>
+                  </span>
+                </a>
+              </div>
+
+              {/* Enterprise */}
+              <div className="price-card">
+                <h3>Enterprise</h3>
+                <div className="price">
+                  <b>Custom</b>
+                </div>
+                <p className="price-desc">Dedicated control plane instances with bespoke compliance.</p>
+                <ul>
+                  <li>Air-gapped on-premise mesh</li>
+                  <li>Custom OPA policy engines</li>
+                  <li>24/7 dedicated SRE incident desk</li>
+                </ul>
+                <a
+                  href="/terms"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate('/terms');
+                  }}
+                  className="btn btn-ghost full"
+                >
+                  Contact Engineering
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- CTA BAND ---------- */}
+        <section className="cta">
+          <div className="cta-glow" aria-hidden="true">
+            <div className="cta-grid" />
+            <div className="cta-aura" />
+          </div>
+
+          <div className="rail cta-inner">
+            <span className="eyebrow">Zero-Risk Deployment</span>
+            <h2>Ready to automate your production mesh?</h2>
+            <p>Deploy your first autonomous loop in less than five minutes. No credit card required.</p>
+            <div className="hero-actions center">
+              <a
+                href="/register"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate('/register');
+                }}
+                className="btn btn-solid roll"
               >
-                <span>{authed ? 'Lancer un scan' : 'Commencer gratuitement'}</span>
-                <IconArrowRight className="h-4 w-4" />
-              </button>
-              <a href="#fonctionnement" className="btn-ghost px-6 py-3 text-base">
-                Comment ça marche
+                <span className="roll-stack">
+                  <span>Get Started with Mesh</span>
+                  <span>Launch Mission Control</span>
+                </span>
               </a>
             </div>
-
-            <p className="mt-5 flex items-center gap-2 text-sm text-kx-muted">
-              <IconCheck className="h-4 w-4 text-black" />
-              3 scans de découverte offerts · sans carte bancaire
-            </p>
           </div>
+        </section>
+      </main>
 
-          {/* Interactive Console Simulation */}
-          <div className="console min-w-0 [perspective:1200px]">
-            <div className="rounded-3xl border border-kx-border bg-white p-5 shadow-[0_30px_80px_-20px_rgba(0,0,0,.25)]">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex gap-1.5">
-                  <span className="h-3 w-3 rounded-full bg-zinc-200" />
-                  <span className="h-3 w-3 rounded-full bg-zinc-200" />
-                  <span className="h-3 w-3 rounded-full bg-zinc-200" />
-                </div>
-                <span className="truncate pl-3 font-mono text-xs text-kx-muted">scan · votre-site.com</span>
+      {/* ---------- FOOTER ---------- */}
+      <footer className="footer">
+        <div className="rail">
+          <div className="foot-inner">
+            <div className="foot-brand">
+              <div className="brand">
+                <div className="brand-glyph" />
+                <span className="brand-word">HALCYON</span>
               </div>
-
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="font-semibold">Analyse en cours</span>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white transition ${
-                    scanStatus === 'Terminé' ? 'bg-kx-teal' : 'bg-black'
-                  }`}
-                >
-                  {scanStatus}
-                </span>
-              </div>
-
-              <div className="h-2 overflow-hidden rounded-full bg-kx-panel2">
-                <div
-                  className="h-full rounded-full bg-black transition-all duration-700 ease-out"
-                  style={{ width: `${progressWidth}%` }}
-                />
-              </div>
-
-              <ol className="mt-4 grid grid-cols-4 gap-2 text-center text-[11px]">
-                {['Reconnaissance', 'Analyse', 'Corrélation', 'Rapport'].map((phase, idx) => (
-                  <li
-                    key={phase}
-                    className={`transition ${idx <= activePhase ? 'font-semibold text-black' : 'text-zinc-400'}`}
-                  >
-                    <span
-                      className={`mx-auto mb-1 block h-2 w-2 rounded-full transition ${
-                        idx <= activePhase ? 'bg-black' : 'bg-zinc-200'
-                      }`}
-                    />
-                    {phase}
-                  </li>
-                ))}
-              </ol>
-
-              <div className="mt-5 space-y-2">
-                <div className="flex items-center gap-3 rounded-xl border border-kx-border px-3 py-2.5 text-sm transition">
-                  <span className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase text-white bg-sev-high">
-                    Élevée
-                  </span>
-                  <span className="truncate font-medium">Content-Security-Policy absente</span>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-kx-border px-3 py-2.5 text-sm transition">
-                  <span className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase text-white bg-sev-medium">
-                    Moyenne
-                  </span>
-                  <span className="truncate font-medium">En-tête HSTS manquant</span>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-kx-border px-3 py-2.5 text-sm transition">
-                  <span className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase text-white bg-sev-low">
-                    Faible
-                  </span>
-                  <span className="truncate font-medium">Fuite de technologie (X-Powered-By)</span>
-                </div>
-              </div>
-
-              <p className="mt-4 text-center text-[11px] text-kx-muted">
-                Démonstration animée · résultats illustratifs
-              </p>
+              <p>Autonomous operations control plane for modern cloud infrastructure.</p>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Stats Ribbon */}
-      <section className="border-y border-kx-border bg-kx-bg">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 divide-y divide-kx-border px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-8">
-          <div className="py-10 text-center sm:px-6">
-            <p className="font-display text-4xl font-semibold sm:text-5xl">15</p>
-            <p className="mt-2 text-sm text-kx-muted">analyseurs de sécurité orchestrés</p>
-          </div>
-          <div className="py-10 text-center sm:px-6">
-            <p className="font-display text-4xl font-semibold sm:text-5xl">6</p>
-            <p className="mt-2 text-sm text-kx-muted">phases d’analyse, de la reconnaissance au rapport</p>
-          </div>
-          <div className="py-10 text-center sm:px-6">
-            <p className="font-display text-4xl font-semibold sm:text-5xl">3</p>
-            <p className="mt-2 text-sm text-kx-muted">scans offerts à l’inscription</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Steps Section */}
-      <section id="fonctionnement" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-24 sm:px-8">
-        <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-widest text-kx-muted">Fonctionnement</p>
-          <h2 className="mt-3 font-display text-3xl font-semibold sm:text-5xl">
-            Votre premier audit en trois étapes.
-          </h2>
-        </div>
-
-        <div className="steps relative mt-14">
-          <div className="steps-line absolute left-0 right-0 top-7 hidden h-px bg-black md:block" />
-          <ol className="grid gap-6 md:grid-cols-3">
-            {steps.map((st) => (
-              <li key={st.n} className="step relative">
-                <span className="relative z-10 grid h-14 w-14 place-items-center rounded-full bg-black font-display text-lg font-semibold text-white ring-8 ring-white">
-                  {st.n}
-                </span>
-                <h3 className="mt-6 font-display text-xl font-semibold">{st.title}</h3>
-                <p className="mt-2 text-kx-muted">{st.text}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="fonctionnalites" className="scroll-mt-24 bg-kx-navy py-24 text-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-8">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-widest text-white/50">Fonctionnalités</p>
-            <h2 className="mt-3 font-display text-3xl font-semibold sm:text-5xl">
-              Tout ce qu’un attaquant regarderait. Avant lui.
-            </h2>
-          </div>
-
-          <div className="features mt-14 grid gap-px overflow-hidden rounded-3xl bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feat) => (
-              <div
-                key={feat.title}
-                className="feature group bg-kx-navy p-7 transition-colors duration-300 hover:bg-white/[.04]"
-              >
-                <span className="mb-5 block h-px w-10 bg-white/40 transition-all duration-500 group-hover:w-20 group-hover:bg-white" />
-                <h3 className="font-display text-xl font-semibold">{feat.title}</h3>
-                <p className="mt-2 text-white/60">{feat.text}</p>
+            <div className="foot-cols">
+              <div className="foot-col">
+                <h6>Product</h6>
+                <a href="#features">Agents</a>
+                <a href="#how">Topology</a>
+                <a href="#pricing">Pricing</a>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Report Demo Section */}
-      <section className="report mx-auto grid max-w-6xl items-center gap-14 px-4 py-24 sm:px-8 lg:grid-cols-2">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-widest text-kx-muted">Rapports</p>
-          <h2 className="mt-3 font-display text-3xl font-semibold sm:text-5xl">
-            Des résultats que toute l’équipe comprend.
-          </h2>
-          <p className="mt-5 text-lg text-kx-muted">
-            Les vulnérabilités sont regroupées, classées par gravité et accompagnées d’un correctif concret. Téléchargez le rapport détaillé en PDF pour vos équipes ou vos clients.
-          </p>
-          <ul className="mt-6 space-y-3">
-            {[
-              'Explications en français, sans jargon inutile',
-              'Priorisation par gravité',
-              'Rapport PDF, HTML ou JSON',
-              'Historique de tous vos audits',
-            ].map((it) => (
-              <li key={it} className="flex items-center gap-3">
-                <IconCheck className="h-5 w-5 text-black shrink-0" />
-                <span>{it}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="min-w-0 rounded-3xl border border-kx-border bg-white p-5 shadow-card sm:p-7">
-          <div className="flex items-center gap-6">
-            <svg viewBox="0 0 110 110" className="h-28 w-28 -rotate-90">
-              <circle cx="55" cy="55" r="48" fill="none" stroke="#f4f4f5" strokeWidth="10" />
-              <circle
-                className="score-ring"
-                cx="55"
-                cy="55"
-                r="48"
-                fill="none"
-                stroke="#0a0a0a"
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray="302"
-                strokeDashoffset="85"
-              />
-            </svg>
-            <div>
-              <p className="text-sm text-kx-muted">Score de sécurité</p>
-              <p className="font-display text-4xl font-semibold">
-                72<span className="text-xl text-kx-muted">/100</span>
-              </p>
-              <p className="text-xs text-kx-muted">Exemple illustratif</p>
-            </div>
-          </div>
-
-          <div className="mt-7 space-y-3">
-            {[
-              { l: 'Critique', w: '8%', c: 'bg-sev-critical', n: 0 },
-              { l: 'Élevée', w: '30%', c: 'bg-sev-high', n: 2 },
-              { l: 'Moyenne', w: '55%', c: 'bg-sev-medium', n: 4 },
-              { l: 'Faible', w: '80%', c: 'bg-sev-low', n: 7 },
-            ].map((row) => (
-              <div key={row.l} className="grid grid-cols-[80px_1fr_24px] items-center gap-3 text-sm">
-                <span className="text-kx-muted">{row.l}</span>
-                <span className="h-2.5 rounded-full bg-kx-panel2">
-                  <span className={`block h-full rounded-full ${row.c}`} style={{ width: row.w }} />
-                </span>
-                <span className="text-right font-semibold">{row.n}</span>
+              <div className="foot-col">
+                <h6>Developers</h6>
+                <a href="#how">Documentation</a>
+                <a href="#features">eBPF Engine</a>
+                <a href="#features">Changelog</a>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Pricing Section */}
-      <section id="tarifs" className="scroll-mt-24 border-t border-kx-border bg-kx-bg py-24">
-        <div className="mx-auto max-w-6xl px-4 sm:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-kx-muted">Tarifs</p>
-            <h2 className="mt-3 font-display text-3xl font-semibold sm:text-5xl">
-              Payez ce que vous scannez.
-            </h2>
-            <p className="mt-4 text-kx-muted">
-              Commencez gratuitement, puis achetez des crédits ou abonnez-vous pour une surveillance continue.
-            </p>
-          </div>
-
-          <div className="plans mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {plans.map((pl) => (
-              <div
-                key={pl.name}
-                className={`plan flex flex-col rounded-3xl border p-6 ${
-                  pl.highlight
-                    ? 'border-black bg-black text-white shadow-2xl lg:-translate-y-3'
-                    : 'border-kx-border bg-white'
-                }`}
-              >
-                <p className={`text-xs font-semibold uppercase tracking-wider ${pl.highlight ? 'text-white/60' : 'text-kx-muted'}`}>
-                  {pl.tag}
-                </p>
-                <h3 className="mt-1 font-display text-2xl font-semibold">{pl.name}</h3>
-                <p className="mt-4 font-display text-3xl font-semibold">{pl.price}</p>
-                <ul className={`mt-6 space-y-2.5 text-sm ${pl.highlight ? 'text-white/80' : 'text-kx-muted'}`}>
-                  {pl.items.map((it, idx) => (
-                    <li key={idx} className="flex gap-2">
-                      <IconCheck className="mt-0.5 h-4 w-4 shrink-0" />
-                      <span>{it}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className={`mt-6 text-xs ${pl.highlight ? 'text-white/50' : 'text-kx-muted'}`}>
-                  {pl.note}
-                </p>
+              <div className="foot-col">
+                <h6>Company</h6>
+                <a href="#pricing">Security</a>
                 <button
-                  onClick={() => onNavigate(authed ? '/credits' : '/register')}
-                  className={`mt-6 inline-flex justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
-                    pl.highlight
-                      ? 'bg-white text-black hover:bg-zinc-200'
-                      : 'border border-kx-border hover:border-black'
-                  }`}
+                  type="button"
+                  onClick={() => onNavigate('/terms')}
+                  className="ghost-link"
+                  style={{ textAlign: 'left', padding: 0 }}
                 >
-                  {pl.btnText}
+                  Terms
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('/terms')}
+                  className="ghost-link"
+                  style={{ textAlign: 'left', padding: 0 }}
+                >
+                  Privacy
                 </button>
               </div>
-            ))}
+            </div>
+          </div>
+
+          <div className="foot-bottom">
+            <div>© {new Date().getFullYear()} Halcyon Mesh, Inc. All rights reserved.</div>
+            <div className="foot-state">
+              <span className="dot-live" />
+              <span>Mesh Status: All Systems Operational</span>
+            </div>
           </div>
         </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="cta relative isolate overflow-hidden bg-kx-navy py-28 text-white">
-        <svg
-          viewBox="0 0 1200 560"
-          preserveAspectRatio="xMidYMid slice"
-          className="cta-circuit pointer-events-none absolute inset-0 -z-10 h-full w-full text-white/10"
-          aria-hidden="true"
-        >
-          <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {circuitPaths.map((d, i) => (
-              <path key={i} d={d} />
-            ))}
-          </g>
-          <g fill="currentColor">
-            {circuitCircles.map(([cx, cy], i) => (
-              <circle key={i} cx={cx} cy={cy} r="6" />
-            ))}
-          </g>
-        </svg>
-
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-8">
-          <h2 className="font-display text-3xl font-semibold sm:text-6xl">
-            Votre surface d’attaque, enfin visible.
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-white/60">
-            Créez votre compte et lancez votre premier scan en quelques minutes.
-          </p>
-          <button
-            onClick={() => onNavigate(authed ? '/scans/new' : '/register')}
-            className="mt-9 inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-base font-semibold text-black transition hover:bg-zinc-200"
-          >
-            <span>{authed ? 'Lancer un scan' : 'Commencer gratuitement'}</span>
-            <IconArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-kx-border bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-kx-muted sm:px-8">
-          <Logo />
-          <nav className="flex gap-5" aria-label="Pied de page">
-            <button
-              onClick={() => onNavigate('/terms')}
-              className="hover:text-black transition"
-            >
-              Conditions d’utilisation
-            </button>
-            <button
-              onClick={() => onNavigate(authed ? '/dashboard' : '/login')}
-              className="hover:text-black transition"
-            >
-              {authed ? 'Dashboard' : 'Connexion'}
-            </button>
-          </nav>
-          <p>© {new Date().getFullYear()} Kortex Defender</p>
-        </div>
       </footer>
-    </div>
+    </>
   );
 }
