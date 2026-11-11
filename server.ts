@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { createExpressApp } from './backend/app.ts';
+import { createExpressApp } from './backend/src/app.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +30,7 @@ async function startServer() {
 
   const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Kortex Defender running on http://0.0.0.0:${PORT}`);
-    const { testPostgresConnection } = await import('./backend/db/postgres.ts');
+    const { testPostgresConnection } = await import('./backend/src/database/connection.js');
     await testPostgresConnection();
   });
 

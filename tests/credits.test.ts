@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createTestServer, TestContext } from './helpers.ts';
-import { DB } from '../backend/db.ts';
+import { DB } from '../backend/src/database/db.js';
 
 export async function runCreditsTests() {
   console.log('\n🔵 Suite: Gestion des Crédits & Facturation (/api/v1/credits)');

@@ -1,7 +1,7 @@
 import http from 'http';
 import { AddressInfo } from 'net';
-import { createExpressApp } from '../backend/app.ts';
-import { DB } from '../backend/db.ts';
+import { createExpressApp } from '../backend/src/app.js';
+import { DB } from '../backend/src/database/db.js';
 
 export interface TestContext {
   server: http.Server;

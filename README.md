@@ -82,32 +82,55 @@ La plateforme est nativement adaptée aux réalités économiques et techniques 
 L'application repose sur une **Architecture Monorepo Découplée en Couches** avec séparation stricte des répertoires :
 
 ```text
-kortex-defender/
+├── backend/
+│   ├── src/
+│   │   ├── config/              # Configuration (env.js, cors.js)
+│   │   ├── controllers/         # Contrôleurs API REST (auth, targets, scans, credits, misc)
+│   │   ├── database/
+│   │   │   ├── Base_de_donnees.sql  # Schéma SQL PostgreSQL & Seed officiel
+│   │   │   ├── connection.js    # Pool PostgreSQL avec fallback automatique
+│   │   │   └── db.js            # Store de données autonome
+│   │   ├── middlewares/         # Middlewares (auth, cors, error)
+│   │   ├── routes/              # Définition des routes /api/v1/*
+│   │   ├── utils/               # Moteurs d'audit (real-engine.js, scanner.js, helpers.js)
+│   │   ├── app.js               # Factory Express
+│   │   └── server.js            # Serveur backend autonome (Port 5000)
+│   ├── package-lock.json
+│   └── package.json
 │
-├── server.ts                   <-- [ORCHESTRATEUR] Démarre le serveur sur le port 3000
+├── frontend/
+│   ├── public/
+│   │   ├── favicon.svg          # Favicon officiel Kortex Defender
+│   │   └── icons.svg            # Sprite d'icônes SVG
+│   ├── src/
+│   │   ├── assets/
+│   │   │   ├── hero.png         # Capture héro / mockup
+│   │   │   ├── react.svg
+│   │   │   └── vite.svg
+│   │   ├── components/          # Composants UI (AppLayout, Icons)
+│   │   ├── lib/
+│   │   │   └── types.ts         # Modèles de données TypeScript
+│   │   ├── pages/               # Les 13 vues du produit
+│   │   ├── services/
+│   │   │   └── api.ts           # Client API typé
+│   │   ├── App.css              # Styles globaux applicatifs
+│   │   ├── App.tsx              # Routeur & gestion de session
+│   │   ├── index.css            # Design System Halcyon Mesh (Tailwind CSS v4)
+│   │   └── main.tsx             # Point de montage React 19
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── README.md
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
 │
-├── frontend/                   <-- [APPLICATION REACT SPA]
-│   ├── App.tsx                # Routeur applicatif & gestion de session
-│   ├── main.tsx               # Point de montage React 19
-│   ├── index.css              # Design system Tailwind CSS v4
-│   ├── types.ts               # Typage client (User, Target, Scan...)
-│   ├── components/            # Composants UI (AppLayout, Icons...)
-│   ├── context/               # Contexte global (AuthContext...)
-│   └── pages/                 # Les 13 vues du produit (Dashboard, Scans...)
-│
-└── backend/                    <-- [API REST & MOTEURS NODE.JS / EXPRESS]
-    ├── app.ts                 # Factory Express & montage des routeurs /api/v1/*
-    ├── db.ts                  # Store de données (prêt pour PostgreSQL)
-    ├── types.ts               # Modèles de données typés
-    ├── routes/                # Contrôleurs API REST découpés par domaine
-    │   ├── auth.routes.ts     # Inscription, connexion, OTP WhatsApp
-    │   ├── targets.routes.ts  # Gestion des cibles et attestations
-    │   ├── scans.routes.ts    # Lancement, suivi et rapports d'audits
-    │   ├── credits.routes.ts  # Solde, coupons KX et historique
-    │   └── misc.routes.ts     # Profil, notifications, parrainage
-    └── services/              # Moteurs de calcul et d'analyse réseau
-        ├── scanner.ts         # Orchestrateur asynchrone des scans
-        └── real-engine.ts     # Moteur réseau réel (DNS, TLS, Headers, CVSS)
+├── .gitignore
+├── package-lock.json
+├── package.json
+└── README.md
 ```
 
 ---

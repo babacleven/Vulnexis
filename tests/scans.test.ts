@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createTestServer, TestContext } from './helpers.ts';
-import { DB } from '../backend/db.ts';
+import { DB } from '../backend/src/database/db.js';
 
 export async function runScansTests() {
   console.log('\n🔵 Suite: Moteur de Scans & Audits (/api/v1/scans)');
@@ -10,7 +10,7 @@ export async function runScansTests() {
     ctx.resetDb();
 
     // 0. Préparation : s'assurer qu'au moins une cible existe pour les scans
-    let testTarget = DB.targets[0];
+    let testTarget: any = DB.targets[0];
     if (!testTarget) {
       testTarget = {
         id: 'tgt_test_scan_target',
