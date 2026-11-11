@@ -1,7 +1,7 @@
 import { DB } from '../database/db.js';
 import { resolveCurrentUser } from '../middlewares/auth.middleware.js';
 import { generateId } from '../utils/helpers.js';
-import { runScanWorker } from '../utils/scanner.js';
+import { runScanWorker } from '../services/scanner.ts';
 
 export const scansController = {
   // Liste des scans
