@@ -1,623 +1,326 @@
 # Guide Complet d'Architecture & Fonctionnement · Kortex Defender
 
-Bienvenue dans le guide de référence de **Kortex Defender**. Ce document a été rédigé pour vous expliquer de manière claire, pédagogique et exhaustive **l'architecture logicielle retenue pour le projet**, **la séparation stricte en deux dossiers (`frontend` et `backend`)**, **la normalisation des routes sous `/api/v1/`**, **comment lancer tout le projet avec une vraie base de données PostgreSQL**, et **la marche à suivre pour faire évoluer la plateforme**.
+Bienvenue dans le guide de référence de **Kortex Defender**. Ce document explique de manière claire, pédagogique et fidèle au code actuel **l'architecture logicielle du projet**, **la séparation en deux espaces (`frontend/` et `backend/`)**, **le rôle de chaque dossier et fichier**, **comment connecter votre PostgreSQL local sans Docker ni Prisma**, et **le parcours complet des données lors d'un scan de sécurité**.
 
 ---
 
 ## Sommaire
 
-1. [L'Architecture Utilisée : Architecture Découplée en Couches](#1-larchitecture-utilisée--architecture-découplée-en-couches)
-2. [Pourquoi cette Architecture ? (Bénéfices & Vision)](#2-pourquoi-cette-architecture--bénéfices--vision)
-3. [Structure Complète du Projet (Cartographie des Dossiers)](#3-structure-complète-du-projet-cartographie-des-dossiers)
-4. [La Normalisation des Routes API sous `/api/v1/`](#4-la-normalisation-des-routes-api-sous-apiv1)
-5. [Le Dossier `frontend/` (Interface & Expérience Utilisateur)](#5-le-dossier-frontend-interface--expérience-utilisateur)
-6. [Le Dossier `backend/` (API, Logique Métier & Moteur d'Audit)](#6-le-dossier-backend-api-logique-métier--moteur-daudit)
-7. [Le Fichier d'Orchestration Racine (`server.ts`)](#7-le-fichier-dorchestration-racine-serverts)
-8. [Guide Pas-à-Pas : Comment Lancer TOUT le Projet avec la Base de Données](#8-guide-pas-à-pas--comment-lancer-tout-le-projet-avec-la-base-de-données)
-9. [Parcours Réel des Données (Flux de A à Z)](#9-parcours-réel-des-données-flux-de-a-à-z)
-10. [Guide d'Évolution Pratique (Mobile Money, Nouveaux Audits)](#10-guide-dévolution-pratique-mobile-money-nouveaux-audits)
+1. [L'Architecture Utilisée : Monorepo Découplé en Couches](#1-larchitecture-utilisée--monorepo-découplé-en-couches)
+2. [Pourquoi cette Architecture ?](#2-pourquoi-cette-architecture-)
+3. [Cartographie Exacte des Dossiers et Fichiers](#3-cartographie-exacte-des-dossiers-et-fichiers)
+4. [Normalisation des Routes API (`/api/v1/`)](#4-normalisation-des-routes-api-apiv1)
+5. [Le Dossier `frontend/` (Interface React 19)](#5-le-dossier-frontend-interface-react-19)
+6. [Le Dossier `backend/` (API, Contrôleurs & Moteurs d'Audit)](#6-le-dossier-backend-api-contrôleurs--moteurs-daudit)
+7. [L'Orchestrateur Racine (`server.ts`) & Chargement `.env`](#7-lorchestrateur-racine-serverts--chargement-env)
+8. [Guide Pratique : Travailler en Local (Store Autonome ou PostgreSQL Natif)](#8-guide-pratique--travailler-en-local-store-autonome-ou-postgresql-natif)
+9. [Parcours Réel des Données (Flux d'un Scan de A à Z)](#9-parcours-réel-des-données-flux-dun-scan-de-a-à-z)
+10. [Tests Automatisés & Collection API](#10-tests-automatisés--collection-api)
 11. [Commandes Utiles & Résumé des Scripts](#11-commandes-utiles--résumé-des-scripts)
 
 ---
 
-## 1. L'Architecture Utilisée : Architecture Découplée en Couches
+## 1. L'Architecture Utilisée : Monorepo Découplé en Couches
 
-Pour Kortex Defender, nous avons mis en œuvre une **Architecture Monorepo Découplée en Couches (Decoupled Layered Architecture)**.
-
-Cette architecture sépare formellement le projet en **trois strates indépendantes** :
+Kortex Defender suit une **Architecture Découplée en Couches** (*Decoupled Layered Architecture*) :
 
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│                   NAVIGATEUR DU CLIENT (WEB)                     │
-└─────────────────────────────────┬────────────────────────────────┘
-                                  │ Requêtes HTTP (Fetch / API)
+┌────────────────────────────────────────────────────────────────────┐
+│                    NAVIGATEUR DU CLIENT (WEB)                      │
+└─────────────────────────────────┬──────────────────────────────────┘
+                                  │ HTTP / JSON (fetch via api.ts)
                                   ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  ORCHESTRATEUR DE RACINE (server.ts - Port 3000)                │
-│  - Reverse-Proxy & Middleware de Dev Vite (HMR instantané)       │
-│  - Passerelle HTTP vers les routes standardisées /api/v1/*       │
-└──────────────────┬─────────────────────────────┬─────────────────┘
-                   │                             │
-                   ▼                             ▼
-┌──────────────────────────────────────┐  ┌────────────────────────┐
-│      DOSSIER /frontend (Client)      │  │ DOSSIER /backend (API) │
-│  - React 19 SPA                      │  │  - Express 4 Modulaire │
-│  - Tailwind CSS v4                   │  │  - Couche Contrôleurs  │
-│  - Routage Client (App.tsx)          │  │  - Couche Services     │
-│  - Contexte Global (AuthContext)     │  │  - Couche Données (DB) │
-│  - Pages & Composants UI             │  │  - Moteur Réseau Réel  │
-└──────────────────────────────────────┘  └────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  MODE UNIFIÉ : server.ts (Port 3000)   OU   MODE SÉPARÉ :          │
+│  - Vite Middleware + Express API            - Front : Vite (5173)  │
+│  - Chargement auto .env via env.js          - Back  : Express(5000)│
+└──────────────────┬───────────────────────────────┬─────────────────┘
+                   │                               │
+                   ▼                               ▼
+┌──────────────────────────────────┐  ┌──────────────────────────────┐
+│     DOSSIER /frontend (UI)       │  │     DOSSIER /backend (API)   │
+│  - React 19 SPA                  │  │  - Routes (/api/v1/*)        │
+│  - Tailwind CSS v4               │  │  - Contrôleurs métier        │
+│  - Services API typés (api.ts)   │  │  - Middlewares (auth, cors)  │
+│  - Modèles (src/lib/types.ts)    │  │  - Services (real-engine.ts) │
+│  - 13 Pages & AppLayout          │  │  - Database (pg + db.js)     │
+└──────────────────────────────────┘  └──────────────────────────────┘
 ```
 
-### Les 4 Couches Métier de l'Application :
+### Les 4 Couches de Responsabilité :
 
-1. **Couche Présentation (Presentation Layer - `/frontend`) :**
-   - Purement dédiée à l'affichage, aux interactions de l'utilisateur, à la validation des formulaires en temps réel, aux animations et au rendu responsive.
-   - Ne contient **aucune logique réseau bas niveau** (pas de sockets TLS bruts, pas de requêtes DNS internes). Elle consomme l'API REST via des contrats TypeScript stricts et des appels à `/api/v1/*`.
+1. **Couche Présentation (`frontend/src/`) :**
+   - Gère uniquement l'interface utilisateur, le routage client, les formulaires, la vitrine **Halcyon Mesh ("Obsidian Control Plane")** et le tableau de bord applicatif.
+   - Communique exclusivement avec le backend via `frontend/src/services/api.ts` et les endpoints `/api/v1/*`.
 
-2. **Couche Application & Contrôleurs (Application / API Layer - `/backend/routes/`) :**
-   - Reçoit les requêtes HTTP, extrait les paramètres, applique les règles d'autorisation de session, valide les entrées et formate les réponses selon le standard Kortex Defender (`{ code: 200, msg: "...", data: { ... } }`).
-   - Toutes les routes sont désormais préfixées par `/api/v1/` (avec conservation d'alias pour la rétrocompatibilité).
+2. **Couche Routage & Middlewares (`backend/src/routes/`, `backend/src/middlewares/`) :**
+   - `cors.middleware.js` autorise les requêtes cross-origin entre le frontend (`5173`) et le backend (`5000`).
+   - `auth.middleware.js` identifie la session active via le cookie `kortex_session`.
+   - `error.middleware.js` capture les exceptions non gérées et renvoie des réponses JSON homogènes.
 
-3. **Couche Domaine & Métier (Domain / Service Layer - `/backend/services/`) :**
-   - Contient la logique d'analyse de cybersécurité pure :
-     - Résolution DNS active (enregistrements A, MX, TXT, détection SPF & DMARC).
-     - Handshake cryptographique SSL/TLS (vérification de la date d'expiration, de l'émetteur du certificat et des protocoles dépréciés TLSv1.0/1.1).
-     - Analyse des en-têtes HTTP de sécurité (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, bannières serveur divulguées).
-     - Calcul du score CVSS et pondération de la note de sécurité sur 100.
+3. **Couche Contrôleurs & Services (`backend/src/controllers/`, `backend/src/services/`) :**
+   - Les contrôleurs (`auth`, `targets`, `scans`, `credits`, `misc`) valident les entrées et orchestrent les opérations métier.
+   - Les services (`real-engine.ts`, `scanner.ts`) exécutent les vrais contrôles réseau (DNS, TLS, HTTP headers, sous-domaines, score CVSS).
 
-4. **Couche Accès aux Données & Persistance (Data Layer - `/backend/db.ts` & `/backend/types.ts`) :**
-   - Fournit l'abstraction de la base de données. Actuellement architecturée avec un Store typé en mémoire contenant le profil de référence exact (`babaaristote6@gmail.com`, 0 crédit, 2 scans gratuits, cibles vides), elle est prête à être branchée sur PostgreSQL avec Prisma sans toucher aux contrôleurs.
+4. **Couche Données (`backend/src/database/`) :**
+   - `Base_de_donnees.sql` définit le schéma PostgreSQL complet (6 tables + données initiales).
+   - `connection.js` gère le pool `pg` connecté à votre `DATABASE_URL`.
+   - `db.js` fournit le store autonome local pré-rempli en cas d'absence de PostgreSQL.
 
 ---
 
-## 2. Pourquoi cette Architecture ? (Bénéfices & Vision)
+## 2. Pourquoi cette Architecture ?
 
-| Critère | Avantage avec notre Architecture Découplée |
+| Critère | Bénéfice concret |
 |---|---|
-| **Séparation des Préoccupations (SoC)** | Le frontend et le backend ne se mélangent pas. Un développeur frontend peut travailler dans `/frontend` sans risquer de toucher au moteur d'audit de `/backend`. |
-| **Normalisation d'API `/api/v1/`** | Standard international d'API RESTful permettant le versionnement futur (ex. `/api/v2/`) sans casser les applications existantes. |
-| **Simplicité de Déploiement** | Grâce à `server.ts` à la racine, l'ensemble tourne sur un port unique (**port 3000**), facilitant le déploiement sur Cloud Run, Docker, VPS ou plateforme PaaS sans complexité de proxy inverse externe. |
-| **Évolutivité vers PostgreSQL** | Toutes les données transitent par `/backend/db.ts` et `/backend/types.ts`. Remplacer la mémoire par PostgreSQL / Prisma prend moins d'une heure car les interfaces sont déjà calquées sur les schémas relationnels. |
-| **Facilité de Migration Mobile** | Si demain vous souhaitez créer une application mobile (iOS / Android Flutter ou React Native), le dossier `/backend` est déjà une API REST 100 % indépendante prête à être consommée. |
-| **Maintenance & Clarté** | Plus aucun fichier fourre-tout de 1 500 lignes. Chaque fichier a une responsabilité unique et mesure entre 50 et 300 lignes. |
+| **Séparation Frontend / Backend** | Chaque partie possède son propre `package.json`, ses propres scripts et peut être déployée ou testée indépendamment. |
+| **Normalisation `/api/v1/`** | Format de réponse unifié `{ code, msg, data }` prêt pour une application mobile (Flutter / React Native) ou des intégrations externes. |
+| **Double mode d'exécution** | Un seul terminal (`npm run dev` sur le port `3000`) ou deux terminaux séparés (`npm run dev:back` sur `5000` + `npm run dev:front` sur `5173`). |
+| **PostgreSQL natif sans Docker/Prisma** | Vous utilisez directement votre PostgreSQL local via `pg` et `Base_de_donnees.sql`, tout en gardant une bascule automatique vers `db.js`. |
+| **Testabilité rapide** | Une suite complète de tests (`npm test`) démarre le backend en mémoire et vérifie toutes les routes en ~0,25s. |
 
 ---
 
-## 3. Structure Complète du Projet (Cartographie des Dossiers)
+## 3. Cartographie Exacte des Dossiers et Fichiers
 
 ```text
-kortex-defender/
+├── server.ts                         # Orchestrateur Full-Stack (port 3000)
+├── index.html                        # Point d'entrée HTML racine (mode unifié)
+├── package.json                      # Scripts racine (dev, dev:back, dev:front, test, build)
+├── vite.config.ts                    # Config Vite racine + proxy /api -> 5000
+├── tsconfig.json                     # Config TypeScript globale
+├── .env.example                      # Modèle des variables d'environnement (.env)
+├── kortex_defender_api_collection.json # Collection Postman / Bruno des routes API
 │
-├── server.ts                   <-- [ORCHESTRATEUR] Démarre le serveur, connecte le backend et sert le frontend
-├── index.html                  <-- [HTML] Point d'entrée web (Outfit, Roboto Flex, méta SEO)
-├── package.json                <-- [DÉPENDANCES] Packages Node.js et scripts de build
-├── vite.config.ts              <-- [BUILD] Configuration Vite et plugin Tailwind CSS v4
-├── tsconfig.json               <-- [TYPESCRIPT] Règles strictes de compilation ES2022
-├── metadata.json               <-- [MÉTADONNÉES] Nom et description de l'application
+├── README.md                         # Vue d'ensemble et démarrage rapide
+├── GUIDE_PROJET.md                   # Ce guide détaillé d'architecture
+├── FEUILLE_DE_ROUTE_PRODUCTION.md    # Feuille de route étape par étape pour rendre le projet 100% vivant
+├── ISSUES.md                         # Backlog des tickets de production
 │
-├── ISSUES.md                   <-- [FEUILLE DE ROUTE] Les 16 tickets de déploiement en production
-├── README.md                   <-- [DOCUMENTATION] Présentation globale et guide de démarrage rapide
-├── GUIDE_PROJET.md             <-- [GUIDE DÉTAILLÉ] Ce document d'architecture et de fonctionnement
+├── tests/                            # Suite de tests unitaires automatisés
+│   ├── helpers.ts                    # Serveur HTTP éphémère & reset DB
+│   ├── auth.test.ts                  # Tests Auth (/register, /login, OTP, /logout)
+│   ├── targets.test.ts               # Tests Cibles (CRUD, attestation légale)
+│   ├── scans.test.ts                 # Tests Scans (crédits, profils, exports HTML/JSON)
+│   ├── credits.test.ts               # Tests Crédits & Coupons
+│   ├── misc.test.ts                  # Tests Profil, Notifications & Parrainage
+│   └── run-tests.ts                  # Lanceur central (npm test)
 │
-├── public/                     <-- [ASSETS STATIQUES]
-│   ├── kortex-logo.svg         # Logo vectoriel officiel Kortex Defender
-│   └── assets/aistudio/        # Captures d'écran de référence du dashboard officiel
+├── backend/                          # API EXPRESS & MOTEURS D'AUDIT
+│   ├── package.json
+│   ├── package-lock.json
+│   └── src/
+│       ├── app.js                    # Factory Express (middlewares + montage /api/v1)
+│       ├── server.js                 # Serveur standalone Backend (Port 5000)
+│       ├── types.ts                  # Interfaces TypeScript Backend
+│       ├── config/
+│       │   ├── env.js                # Chargement auto du .env + configuration globale
+│       │   └── cors.js               # Options CORS
+│       ├── database/
+│       │   ├── Base_de_donnees.sql   # DDL complet des 6 tables + Seed du compte test
+│       │   ├── connection.js         # Pool PostgreSQL (pg) & test de connexion
+│       │   └── db.js                 # Store local en mémoire (fallback automatique)
+│       ├── middlewares/
+│       │   ├── auth.middleware.js    # Résolution de session / protection des routes
+│       │   ├── cors.middleware.js    # En-têtes CORS & pré-vols OPTIONS
+│       │   └── error.middleware.js   # Gestion centralisée des erreurs JSON
+│       ├── routes/
+│       │   ├── index.js              # Agrégateur des routeurs sous /api/v1
+│       │   ├── auth.routes.js
+│       │   ├── targets.routes.js
+│       │   ├── scans.routes.js
+│       │   ├── credits.routes.js
+│       │   └── misc.routes.js
+│       ├── controllers/
+│       │   ├── auth.controller.js
+│       │   ├── targets.controller.js
+│       │   ├── scans.controller.js
+│       │   ├── credits.controller.js
+│       │   └── misc.controller.js
+│       ├── services/
+│       │   ├── real-engine.ts        # Moteur réseau réel (DNS, TLS, HTTP, CVSS)
+│       │   └── scanner.ts            # Worker asynchrone de progression d'audit
+│       └── utils/
+│           ├── helpers.js            # Génération d'ID, formatage URL, extraction host
+│           ├── real-engine.ts        # Passerelle de ré-export
+│           └── scanner.ts            # Passerelle de ré-export
 │
-├── frontend/                   <-- [DOSSIER 1 : APPLICATION REACT / UI]
-│   ├── main.tsx                # Point de montage React 19 dans #root
-│   ├── App.tsx                 # Routeur applicatif & bascule de vues
-│   ├── index.css               # Design system Tailwind v4 (@theme, polices, couleurs)
-│   ├── types.ts                # Types TypeScript côté client (User, Target, Scan...)
-│   │
-│   ├── context/                # Gestion de l'état global partagé
-│   │   └── AuthContext.tsx     # Session utilisateur, solde de crédits et rafraîchissement
-│   │
-│   ├── components/             # Composants graphiques réutilisables
-│   │   ├── AppLayout.tsx       # Cadre avec Sidebar latérale gauche + Header du haut
-│   │   └── Icons.tsx           # Collection des icônes SVG officielles
-│   │
-│   └── pages/                  # Les 13 écrans de l'application
-│       ├── LandingPage.tsx     # Page d'accueil publique (vitrine, simulateur, tarifs)
-│       ├── AuthPage.tsx        # Connexion, Inscription et validation WhatsApp OTP
-│       ├── DashboardPage.tsx   # Vue d'ensemble : 4 cartes métriques, 3 étapes, derniers scans
-│       ├── TargetsPage.tsx     # Mes applications : liste des cibles et ajout sécurisé
-│       ├── TargetDetailPage.tsx# Détail d'une application et historique de ses scans
-│       ├── ScansPage.tsx       # Historique complet des scans avec filtres statut/cible
-│       ├── NewScanPage.tsx     # Lancer un scan : sélection de la cible et profil
-│       ├── ScanDetailPage.tsx  # Rapport d'audit : score /100, failles, logs, exports
-│       ├── CreditsPage.tsx     # Crédits & offres : solde, codes cadeaux KX, packs FCFA
-│       ├── AgentPage.tsx       # Agent Kortex : présentation de l'IA analyste sécurité
-│       ├── ParrainagePage.tsx  # Parrainage : formulaire de parrain Mobile Money Wave/Orange
-│       ├── SettingsPage.tsx    # Mon compte : coordonnées du profil et déconnexion
-│       └── TermsPage.tsx       # Conditions officielles d'utilisation (texte juridique)
-│
-└── backend/                    <-- [DOSSIER 2 : API & SERVICES NODE.JS]
-    ├── app.ts                  # Factory Express : enregistre les middlewares et les routeurs /api/v1/
-    ├── types.ts                # Modèles de données de la base (DBUser, DBTarget, DBScan...)
-    ├── db.ts                   # Store de données (avec état initial de référence)
-    │
-    ├── routes/                 # Contrôleurs API REST découpés par domaine sous /api/v1/
-    │   ├── auth.routes.ts      # /api/v1/auth/* (login, register, logout, OTP)
-    │   ├── targets.routes.ts   # /api/v1/targets/* (CRUD cibles et attestation d'autorisation)
-    │   ├── scans.routes.ts     # /api/v1/scans/* (lancement, polling, rapports JSON/HTML)
-    │   ├── credits.routes.ts   # /api/v1/credits/* (solde, recharges KX, historique)
-    │   └── misc.routes.ts      # /api/v1/me, notifications, candidatures parrainage
-    │
-    └── services/               # Moteurs d'exécution métier
-        ├── scanner.ts          # Orchestrateur d'audit asynchrone et progression
-        └── real-engine.ts      # Véritable moteur réseau (DNS, SSL/TLS, en-têtes HTTP, failles)
+└── frontend/                         # APPLICATION REACT 19 SPA
+    ├── package.json
+    ├── vite.config.ts                # Config Vite locale (port 5173 + proxy /api)
+    ├── index.html
+    ├── tsconfig.json
+    ├── public/
+    │   ├── favicon.svg               # Icône onglet navigateur
+    │   └── icons.svg                 # Sprite SVG
+    └── src/
+        ├── main.tsx                  # Montage React 19 dans #root
+        ├── App.tsx                   # Routeur SPA & protection des vues privées
+        ├── App.css                   # Styles complémentaires applicatifs
+        ├── index.css                 # Design System Halcyon Mesh + Tailwind CSS v4
+        ├── assets/                   # hero.png, react.svg, vite.svg
+        ├── lib/
+        │   └── types.ts              # Types stricts partagés côté client
+        ├── services/
+        │   └── api.ts                # Client HTTP typé pour /api/v1/*
+        ├── context/
+        │   └── AuthContext.tsx       # État utilisateur, crédits et sessions
+        ├── components/
+        │   ├── AppLayout.tsx         # Coque du dashboard (Sidebar, Header, Notifications)
+        │   └── Icons.tsx             # Icônes SVG sur mesure
+        └── pages/                    # Les 13 écrans du produit
+            ├── LandingPage.tsx       # Vitrine publique (Obsidian Control Plane)
+            ├── AuthPage.tsx          # Connexion, Inscription & OTP WhatsApp
+            ├── DashboardPage.tsx     # Synthèse métrique & derniers audits
+            ├── TargetsPage.tsx       # Gestion des cibles & attestations
+            ├── TargetDetailPage.tsx  # Détail d'une cible & historique
+            ├── ScansPage.tsx         # Liste filtrable de tous les scans
+            ├── NewScanPage.tsx       # Lancement d'un nouvel audit
+            ├── ScanDetailPage.tsx    # Rapport détaillé, terminal logs & exports
+            ├── CreditsPage.tsx       # Solde, coupons et offres FCFA
+            ├── AgentPage.tsx         # Interface Agent Kortex (remédiation IA)
+            ├── ParrainagePage.tsx    # Programme d'affiliation Mobile Money
+            ├── SettingsPage.tsx      # Paramètres du compte
+            └── TermsPage.tsx         # Conditions d'utilisation légales
 ```
 
 ---
 
-## 4. La Normalisation des Routes API sous `/api/v1/`
+## 4. Normalisation des Routes API (`/api/v1/`)
 
-L'ensemble des points d'accès a été normalisé selon le standard **`/api/v1/`** :
+Toutes les routes exposent un contrat JSON homogène `{ code, msg, data }` :
 
-### 1. Authentification (`/api/v1/auth/*`)
-- `POST /api/v1/auth/register` : Inscription avec attribution des 3 scans offerts.
-- `POST /api/v1/auth/login` : Connexion et génération du cookie de session `kortex_session`.
-- `POST /api/v1/auth/logout` : Révocation du cookie de session.
-- `POST /api/v1/auth/send-otp` : Émission du code OTP WhatsApp.
-- `POST /api/v1/auth/verify-otp` : Validation du code à 6 chiffres.
+### Authentification (`/api/v1/auth/*`)
+- `POST /api/v1/auth/register` : Crée un compte et crédite 3 scans gratuits.
+- `POST /api/v1/auth/login` : Vérifie les identifiants et pose le cookie `kortex_session`.
+- `POST /api/v1/auth/logout` : Efface le cookie de session.
+- `POST /api/v1/auth/send-otp` : Génère un code OTP WhatsApp (6 chiffres).
+- `POST /api/v1/auth/verify-otp` : Valide le code OTP.
 
-### 2. Applications & Cibles (`/api/v1/targets/*`)
-- `GET /api/v1/targets` : Liste des applications de l'utilisateur avec pagination.
-- `POST /api/v1/targets` : Déclaration d'une nouvelle cible avec attestation légale obligatoire.
-- `GET /api/v1/targets/:id` : Consultation de la fiche technique d'une cible.
-- `POST /api/v1/targets/:id/authorize` : Activation / désactivation de l'attestation légale.
-- `DELETE /api/v1/targets/:id` : Suppression définitive d'une application et de ses scans.
+### Applications & Cibles (`/api/v1/targets/*`)
+- `GET /api/v1/targets` : Liste paginée des cibles de l'utilisateur.
+- `POST /api/v1/targets` : Ajoute une cible (web, api ou graphql) avec attestation horodatée.
+- `GET /api/v1/targets/:id` : Fiche détaillée d'une cible.
+- `POST /api/v1/targets/:id/authorize` : Active ou révoque l'autorisation de scan.
+- `DELETE /api/v1/targets/:id` : Supprime la cible et ses scans associés.
 
-### 3. Moteur de Scans & Rapports (`/api/v1/scans/*`)
-- `GET /api/v1/scans` : Historique des audits avec filtres (`?status=...&target_id=...`).
-- `POST /api/v1/scans` : Déclenchement d'un audit (déduit 1 scan gratuit ou les crédits).
-- `GET /api/v1/scans/:id` : Récupération de l'état d'avancement et du rapport complet.
-- `GET /api/v1/scans/:id/download?format=html|json` : Téléchargement du rapport complet.
-- `DELETE /api/v1/scans/:id` : Suppression d'un rapport de scan.
+### Moteur de Scans (`/api/v1/scans/*`)
+- `GET /api/v1/scans` : Liste filtrable (`?status=...&target_id=...`).
+- `POST /api/v1/scans` : Débite le solde (scan gratuit ou crédits) et lance `runScanWorker`.
+- `GET /api/v1/scans/:id` : Suivi en direct (`progress`, `phase`, `log_lines`) et rapport complet.
+- `GET /api/v1/scans/:id/download?format=html|json` : Exporte le rapport autonome HTML ou JSON.
+- `DELETE /api/v1/scans/:id` : Supprime un rapport de scan.
 
-### 4. Portefeuille de Crédits (`/api/v1/credits/*`)
-- `GET /api/v1/credits/me` : Solde disponible, scans gratuits et barème des profils.
-- `POST /api/v1/credits/redeem` : Activation d'un code de recharge cadeau (`KX-XXXX`).
-- `GET /api/v1/credits/me/transactions` : Journal horodaté des débits et crédits.
+### Crédits & Transactions (`/api/v1/credits/*`)
+- `GET /api/v1/credits/me` : Retourne `credits`, `free_scans` et le barème des profils.
+- `POST /api/v1/credits/redeem` : Valide un coupon (`STARTER` +20, `PREMIUM` +60, défaut +10).
+- `GET /api/v1/credits/me/transactions` : Historique complet des mouvements.
 
-### 5. Profil, Alertes & Parrainage (`/api/v1/*`)
-- `GET /api/v1/me` : Coordonnées de l'utilisateur connecté.
-- `GET /api/v1/notifications/me` : Liste des notifications reçues.
-- `GET /api/v1/notifications/me/unread-count` : Compteur des alertes non lues.
-- `POST /api/v1/notifications/read-all` : Marquer toutes les notifications comme lues.
-- `GET /api/v1/referrals/me` : Statut de la candidature de parrainage.
-- `POST /api/v1/referrals/apply` : Soumission de la demande d'affiliation avec coordonnées Mobile Money.
+### Profil, Notifications & Parrainage (`/api/v1/*`)
+- `GET /api/v1/me` : Profil de l'utilisateur connecté.
+- `GET /api/v1/notifications/me` & `/unread-count` & `POST /notifications/read-all`.
+- `GET /api/v1/referrals/me` & `POST /referrals/apply` (Mobile Money Wave, Orange, MTN, Moov).
 
----
-
-## 5. Le Dossier `frontend/` (Interface & Expérience Utilisateur)
-
-Le dossier `frontend/` est une application web monopage (Single Page Application - SPA) construite avec **React 19**, **TypeScript** et **Tailwind CSS v4**.
-
-### Rôle des Fichiers Frontend :
-
-- **`frontend/main.tsx` :** Démarre React, injecte les styles `index.css` et enveloppe toute l'application dans `<AuthProvider>` pour que l'état utilisateur soit disponible partout.
-- **`frontend/App.tsx` :** Le contrôleur de navigation. Il observe l'URL du navigateur (`window.location.pathname`) et affiche la page adéquate. Si un utilisateur non connecté essaie d'accéder au dashboard, il est automatiquement redirigé vers `/login`.
-- **`frontend/index.css` :** Contient la configuration du design system :
-  - Palette officielle : `#0a0a0a` (fond sombre et boutons), `#f7f7f7` (fond gris clair), `#d7f7f1` (vert menthe Kortex pour les crédits gratuits).
-  - Typographie : `font-outfit` pour les titres et `font-sans` (Roboto Flex) pour la lisibilité optimale des rapports d'audit.
-- **`frontend/context/AuthContext.tsx` :** C'est la mémoire vive de l'interface :
-  - Il conserve l'objet `user` actuel.
-  - Il met à jour le solde (`credits` et `free_scans`) visible dans le badge supérieur droit.
-  - Il fournit les méthodes `login()`, `register()`, `logout()` et `refreshUser()`.
-- **`frontend/components/AppLayout.tsx` :** Le squelette de l'interface connectée :
-  - Barre latérale noire/blanche avec logo Kortex Defender, bouton `+ Nouveau scan`, les 7 onglets de navigation, l'email connecté et le bouton `Se déconnecter`.
-  - En-tête avec la cloche de notifications et le badge dynamique du solde de crédits.
+*(Des alias rétrocompatibles `/api/auth/*` et `/api/k/*` sont également montés dans `backend/src/app.js`).*
 
 ---
 
-## 6. Le Dossier `backend/` (API, Logique Métier & Moteur d'Audit)
+## 5. Le Dossier `frontend/` (Interface React 19)
 
-Le dossier `backend/` est une application serveur Express modulaire, hautement découplée et autonome.
-
-### A. La Factory Applicative (`backend/app.ts`)
-Elle instancie l'application Express, configure les analyseurs JSON (`express.json()`), les cookies (`cookie-parser`), et monte les 5 routeurs spécialisés :
-```typescript
-app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/targets', targetsRouter);
-app.use('/api/v1/scans', scansRouter);
-app.use('/api/v1/credits', creditsRouter);
-app.use('/api/v1', miscRouter);
-```
-
-### B. Le Moteur d'Audit Réel (`backend/services/real-engine.ts`)
-Ce fichier exécute une véritable analyse de cybersécurité :
-- **DNS Probing :** Résout les enregistrements A, MX, et contrôle la présence des politiques SPF et DMARC anti-phishing.
-- **SSL/TLS Handshake :** Établit une connexion TLS directe avec la cible pour vérifier la validité du certificat (détection d'expiration imminente ou passée) et tester la présence de protocoles obsolètes vulnérables (TLS 1.0 / 1.1).
-- **HTTP Security Headers :** Envoie des requêtes réelles pour vérifier les en-têtes `Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options` et la divulgation de bannières serveurs (`Server`, `X-Powered-By`).
-- **Protection SSRF :** Empêche le scan d'adresses IP privées internes et de métadonnées cloud (ex: `169.254.169.254`).
-- **Calcul du Score CVSS :** Calcule une note sur 100 basée sur le nombre et la gravité des failles découvertes.
+- **`frontend/src/index.css`** : Implémente le thème **Halcyon Mesh ("Obsidian Control Plane")** pour la page d'accueil (`#09090B`, `#16E0C6`, `#8B5CF6`, `Space Grotesk`, `Inter`, `JetBrains Mono`) ainsi que les utilitaires du dashboard applicatif.
+- **`frontend/src/services/api.ts`** : Centralise tous les appels `fetch` avec `credentials: 'include'` et la gestion d'erreur typée.
+- **`frontend/src/context/AuthContext.tsx`** : Synchronise la session utilisateur et rafraîchit dynamiquement le compteur de crédits dans le header.
+- **`frontend/src/pages/ScanDetailPage.tsx`** : Interroge `GET /api/v1/scans/:id` toutes les 2,5s pendant un audit actif, affiche le terminal en temps réel, puis le score `/100`, les filtres par sévérité et les boutons d'export.
 
 ---
 
-## 7. Le Fichier d'Orchestration Racine (`server.ts`)
+## 6. Le Dossier `backend/` (API, Contrôleurs & Moteurs d'Audit)
 
-Le fichier `server.ts` situé à la racine du projet sert de **passerelle d'orchestration**.
+### A. Configuration & Base de données
+- **`backend/src/config/env.js`** : Charge automatiquement votre fichier `.env` depuis la racine du projet ou depuis `backend/`. Ce fichier est importé dès la première ligne des points d'entrée serveur afin que `process.env.DATABASE_URL` soit toujours disponible.
+- **`backend/src/database/connection.js`** : Initialise un `Pool` PostgreSQL (`pg`) si `DATABASE_URL` est défini, puis teste la connexion avec `testPostgresConnection()`. En cas d'absence ou d'erreur réseau, l'application bascule gracieusement sur le store `db.js`.
 
-### Comment fonctionne `server.ts` ?
-1. Il importe la factory backend modulaire : `import { createExpressApp } from './backend/app.ts';`
-2. En mode développement (`npm run dev`) :
-   - Il initialise le serveur Vite en mode middleware (`createViteServer({ server: { middlewareMode: true } })`).
-   - Il monte les middlewares Vite sur l'application Express.
-   - Ainsi, l'ensemble de l'API (`/api/v1/*`) et le rechargement à chaud du frontend React (HMR) tournent ensemble de façon fluide sur `http://localhost:3000`.
-3. En mode production (`npm start`) :
-   - Il sert les fichiers statiques pré-compilés du dossier `/dist` et renvoie `index.html` pour toute route inconnue (gestion du Single Page Application Routing).
+### B. Le Moteur Réel (`backend/src/services/real-engine.ts`)
+Exécute les analyses réseau authentiques sur chaque cible :
+1. **Résolution DNS** (`A`, `AAAA`, `MX`, contrôle anti-spoofing `SPF` et `DMARC`).
+2. **Protection SSRF** : Bloque les adresses internes (`10.x.x.x`, `192.168.x.x`, `169.254.169.254`).
+3. **Handshake SSL/TLS** : Vérifie le certificat, l'émetteur, les jours restants avant expiration et détecte TLS 1.0 / 1.1 obsolètes.
+4. **En-têtes HTTP de sécurité** : Contrôle `CSP`, `HSTS`, `X-Frame-Options`, `X-Content-Type-Options`, `Permissions-Policy` et fuites `Server` / `X-Powered-By`.
+5. **Sous-domaines** : Sonde `api`, `admin`, `auth`, `staging`, `mail`, `portal`, `dev`, `cdn`.
+6. **Score & CVSS** : Calcule la note sur 100 selon la gravité des vulnérabilités.
 
----
-
-## 8. Guide de Développement 100% Local (Sans Docker, Sans Prisma)
-
-> 💡 **Le projet est prêt à fonctionner immédiatement en local sans installer de logiciel externe.**  
-> Vous n'avez **PAS** besoin de Docker, de PostgreSQL ni de Prisma pour comprendre, modifier et tester l'application sur votre ordinateur.  
-> Toute la base de données est gérée de manière transparente par le fichier autonome **`backend/db.ts`**.
+### C. L'Orchestrateur (`backend/src/services/scanner.ts`)
+Appelle `executeRealAudit` en tâche de fond, remplit `scan.log_lines` en temps réel, met à jour `target.last_score`, et applique un repli propre si la cible est inaccessible.
 
 ---
 
-### Comment Travailler Tranquillement en Local ?
+## 7. L'Orchestrateur Racine (`server.ts`) & Chargement `.env`
 
-#### 1. Lancer le projet en une commande (Mode Unifié)
-```bash
-npm run dev
-```
-👉 Ouvrez votre navigateur sur **`http://localhost:3000`**.  
-Le backend Express et le frontend React tournent ensemble sur le même port.
-
----
-
-#### 2. Ou bien lancer séparément Backend et Frontend (2 terminaux)
-
-Si vous préférez travailler avec les deux briques séparées :
-
-* **Dans le Terminal 1 (Backend API seul) :**
-  ```bash
-  npm run dev:back
-  ```
-  👉 L'API Express démarre sur **`http://localhost:5000`** (routes `/api/v1/*`).
-
-* **Dans le Terminal 2 (Frontend Client seul) :**
-  ```bash
-  npm run dev:front
-  ```
-  👉 L'interface client démarre sur **`http://localhost:5173`**.  
-  Le serveur Vite redirige automatiquement toutes les requêtes d'API vers le port 5000 grâce au proxy configuré dans `vite.config.ts`.
+1. En ligne 1, `server.ts` importe `./backend/src/config/env.js` pour charger `.env` immédiatement.
+2. Il crée l'application Express via `createExpressApp()`.
+3. En développement (`npm run dev`), il attache Vite en mode middleware sur le même serveur Express (port `3000`).
+4. En production (`npm start`), il sert les fichiers statiques compilés de `dist/`.
+5. Au démarrage du port, il appelle `testPostgresConnection()` pour confirmer l'état de PostgreSQL dans la console.
 
 ---
 
-### 🗄️ Comment est gérée la Base de Données en Local (`backend/db.ts`) ?
+## 8. Guide Pratique : Travailler en Local (Store Autonome ou PostgreSQL Natif)
 
-En local, le fichier **`backend/db.ts`** agit comme votre base de données locale autonome :
+### Option 1 : Zéro Configuration (Store local `db.js`)
+Sans fichier `.env` (ou sans `DATABASE_URL`), tout fonctionne immédiatement grâce à `backend/src/database/db.js`, déjà pré-rempli avec :
+- Email : `babaaristote6@gmail.com`
+- Mot de passe : `Cl2even2026`
+- Solde : `2` scans gratuits, `0` crédit
 
-```typescript
-// backend/db.ts
-export const DB = {
-  users: [...],         // Contient votre compte babaaristote6@gmail.com
-  targets: [...],       // Stocke vos cibles ajoutées
-  scans: [...],         // Stocke vos rapports de vulnérabilités
-  transactions: [...],  // Gère vos crédits et scans gratuits
-  notifications: [...], // Historique de vos alertes
-  referralRequests: []  // Demandes de parrainage
-};
-```
+### Option 2 : Connecter votre PostgreSQL Local (Sans Docker, Sans Prisma)
+1. **Créer la base de données** dans pgAdmin, DBeaver ou `psql` :
+   ```sql
+   CREATE DATABASE kortex_defender;
+   ```
+2. **Exécuter le script SQL complet** :
+   Ouvrez et exécutez `backend/src/database/Base_de_donnees.sql` dans la base `kortex_defender`.
+   Ce script crée les 6 tables (`users`, `targets`, `scans`, `transactions`, `notifications`, `referral_requests`), les index et insère votre compte de test.
+3. **Configurer `.env` à la racine** :
+   Copiez `.env.example` vers `.env` et renseignez votre mot de passe PostgreSQL :
+   ```env
+   DATABASE_URL="postgresql://postgres:VOTRE_MOT_DE_PASSE@localhost:5432/kortex_defender"
+   ```
+4. **Démarrer et vérifier** :
+   ```bash
+   npm run dev
+   ```
+   La console doit afficher :
+   ```text
+   🐘 [PostgreSQL] Connecté avec succès à votre base locale ! (Heure serveur: ...)
+   ```
 
-#### Avantages pour votre apprentissage :
-1. **Zéro configuration** : Aucun mot de passe de base de données à gérer, aucun service Windows ou conteneur à surveiller.
-2. **Inspection directe** : Vous pouvez ouvrir `backend/db.ts` et voir exactement la structure des données en JSON/TypeScript.
-3. **Personnalisation immédiate** : Vous pouvez changer le solde de crédits (`credits: 100`) ou ajouter une fausse cible directement dans le fichier pour tester instantanément sans taper de requêtes SQL.
-
----
-
-### 🐘 Utiliser votre PostgreSQL Local (Installé sur votre PC sans Docker)
-
-Puisque vous avez déjà PostgreSQL installé nativement sur votre ordinateur (sur le port standard 5432) :
-
-#### Étape 1 : Créer la base de données
-Dans votre gestionnaire de base de données habituel (**pgAdmin**, **DBeaver**, ou la console `psql`) :
-```sql
-CREATE DATABASE kortex_defender;
-```
-
-#### Étape 2 : Exécuter les scripts de création et d'initialisation
-Dans le dossier `backend/db/`, deux scripts SQL purs sont fournis :
-1. **`backend/db/schema.sql`** : Crée les 6 tables (`users`, `targets`, `scans`, `transactions`, `notifications`, `referral_requests`) ainsi que les index de performance.
-2. **`backend/db/seed.sql`** : Insère votre compte de test initial `babaaristote6@gmail.com`.
-
-Il vous suffit de copier-coller leur contenu dans pgAdmin / DBeaver et de cliquer sur "Exécuter".
-
-#### Étape 3 : Renseigner votre mot de passe dans `.env`
-Créez un fichier `.env` à la racine :
-```env
-# Mettez le mot de passe de votre utilisateur PostgreSQL local (généralement postgres)
-DATABASE_URL="postgresql://postgres:VOTRE_MOT_DE_PASSE@localhost:5432/kortex_defender"
-```
-
-#### Étape 4 : Lancer le serveur
-```bash
-npm run dev
-# ou séparé : npm run dev:back
-```
-Au démarrage, le serveur teste et valide immédiatement la connexion :
-```text
-🐘 [PostgreSQL] Connecté avec succès à votre base locale ! (Heure serveur: ...)
-```
+> 💡 Pour passer progressivement les requêtes des contrôleurs (`backend/src/controllers/*.js`) du tableau `DB` vers le `pool` PostgreSQL réel, suivez l'Étape 1 du fichier **`FEUILLE_DE_ROUTE_PRODUCTION.md`**.
 
 ---
 
-## 9. Annexe Optionnelle : Déploiement Futur en Production (Docker & Prisma)
-
-> ⚠️ **Consultez ce chapitre UNIQUEMENT le jour où vous souhaiterez mettre le projet en ligne sur un serveur de production !**  
-> Pour votre travail en local, vous pouvez ignorer totalement cette section.
-
-Pour préparer plus tard un déploiement conteneurisé sur un serveur cloud :
-
-#### Étape 1 : Démarrer PostgreSQL (via Docker ou service managé)
-```bash
-docker run --name kortex-postgres \
-  -e POSTGRES_USER=kortex \
-  -e POSTGRES_PASSWORD=kortex_secret_2026 \
-  -e POSTGRES_DB=kortex_defender \
-  -p 5432:5432 \
-  -d postgres:16-alpine
-```
-
-*(Ou utilisez un service cloud managé comme Cloud SQL, Supabase ou Neon).*
-
-#### Étape 2 : Configurer les Variables d'Environnement
-
-Créez un fichier `.env` à la racine du projet :
-
-```env
-# URL de connexion à votre base PostgreSQL
-DATABASE_URL="postgresql://kortex:kortex_secret_2026@localhost:5432/kortex_defender?schema=public"
-
-# Port du serveur Express
-PORT=3000
-
-# URL publique de l'application
-APP_URL="http://localhost:3000"
-
-# Clé secrète pour les sessions de cookies
-SESSION_SECRET="kortex_defender_secret_key_prod_2026"
-```
-
-#### Étape 3 : Installer Prisma ORM
-
-```bash
-npm install @prisma/client
-npm install -D prisma
-```
-
-#### Étape 4 : Définir le Schéma Relationnel Prisma
-
-Créez le fichier `prisma/schema.prisma` avec les modèles exacts de Kortex Defender :
-
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  phone        String?
-  credits      Int           @default(0)
-  free_scans   Int           @default(3)
-  is_admin     Boolean       @default(false)
-  created_at   DateTime      @default(now())
-
-  targets      Target[]
-  scans        Scan[]
-  transactions Transaction[]
-  notifications Notification[]
-  referrals    ReferralRequest[]
-}
-
-model Target {
-  id            String    @id @default(cuid())
-  userId        String
-  url           String
-  name          String
-  target_type   String    @default("web") // web, api, graphql
-  authorized    Boolean   @default(true)
-  authorized_at DateTime?
-  scans_count   Int       @default(0)
-  last_score    Int?
-  last_scan_at  DateTime?
-  created_at    DateTime  @default(now())
-
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scans         Scan[]
-}
-
-model Scan {
-  id               String    @id @default(cuid())
-  userId           String
-  target_id        String
-  target_url       String
-  profile          String    // fast, standard, deep
-  status           String    @default("queued") // queued, running, completed, failed
-  progress         Int       @default(0)
-  phase            String    @default("Initialisation")
-  score            Int       @default(100)
-  counts_critical  Int       @default(0)
-  counts_high      Int       @default(0)
-  counts_medium    Int       @default(0)
-  counts_low       Int       @default(0)
-  counts_info      Int       @default(0)
-  findings         Json      @default("[]")
-  log_lines        Json      @default("[]")
-  subdomains       Json      @default("[]")
-  duration_seconds Int?
-  created_at       DateTime  @default(now())
-  started_at       DateTime?
-  completed_at     DateTime?
-
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  target           Target    @relation(fields: [target_id], references: [id], onDelete: Cascade)
-}
-
-model Transaction {
-  id           Int      @id @default(autoincrement())
-  userId       String
-  delta        Int
-  kind         String   // free_scan, credit, purchase, promo
-  reason       String   // grant, scan_debit, purchase, redeem
-  scan_id      String?
-  note         String?
-  created_time DateTime @default(now())
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Notification {
-  id         String   @id @default(cuid())
-  userId     String
-  title      String
-  message    String
-  read       Boolean  @default(false)
-  link       String?
-  created_at DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model ReferralRequest {
-  id         String   @id @default(cuid())
-  userId     String
-  promoCode  String
-  fullName   String
-  operator   String   // Wave, Orange, MTN, Moov
-  phone      String
-  status     String   @default("pending") // pending, approved, rejected
-  created_at DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-```
-
-#### Étape 5 : Exécuter la Migration & Initialiser la Base
-
-```bash
-# Générer le client Prisma et créer les tables dans PostgreSQL
-npx prisma migrate dev --name init_kortex_db
-```
-
-#### Étape 6 : Injecter les Données Initiales (Seed)
-
-Créez le fichier `prisma/seed.ts` pour insérer le compte par défaut :
-
-```typescript
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-async function main() {
-  const user = await prisma.user.upsert({
-    where: { email: 'babaaristote6@gmail.com' },
-    update: {},
-    create: {
-      id: '01m6rd9vpzwrzh8p8dkvhdbdkt',
-      email: 'babaaristote6@gmail.com',
-      passwordHash: 'Cl2even2026',
-      phone: '+2250152311124',
-      credits: 0,
-      free_scans: 2,
-      is_admin: false,
-    },
-  });
-
-  console.log('Base de données PostgreSQL initialisée avec succès avec le compte:', user.email);
-}
-
-main()
-  .catch((e) => console.error(e))
-  .finally(async () => await prisma.$disconnect());
-```
-
-Exécutez le script d'initialisation :
-```bash
-npx tsx prisma/seed.ts
-```
-
-#### Étape 7 : Lancer l'Application
-
-```bash
-npm run dev
-```
-
-Vous disposez maintenant d'un environnement **Kortex Defender Full-Stack complet branché sur une véritable base de données PostgreSQL** !
-
----
-
-## 9. Parcours Réel des Données (Flux de A à Z)
-
-### Exemple concret : L'utilisateur lance un scan depuis l'interface
+## 9. Parcours Réel des Données (Flux d'un Scan de A à Z)
 
 ```text
-1. L'utilisateur se rend sur http://localhost:3000/scans/new
-   └── Le routeur frontend (frontend/App.tsx) affiche la page NewScanPage.tsx.
-
-2. NewScanPage effectue une requête GET /api/v1/targets
-   └── Le routeur backend (backend/routes/targets.routes.ts) lit les cibles
-       et renvoie la liste des applications autorisées.
-
-3. L'utilisateur sélectionne son application, choisit le profil "Standard" (2 crédits)
-   et clique sur "Lancer le scan".
-
-4. NewScanPage envoie une requête POST /api/v1/scans
-   avec { target_id: "...", profile: "standard" }.
-
-5. Le backend (backend/routes/scans.routes.ts) :
-   a) Vérifie que la cible est autorisée.
-   b) Vérifie le solde : 2 scans gratuits restants -> déduit 1 scan gratuit (solde = 1).
-   c) Enregistre la transaction : "-1 scan gratuit (audit de sécurité)".
-   d) Crée un scan avec le statut "running", progress: 0%.
-   e) Démarre runScanWorker(scan.id) en arrière-plan sans bloquer la requête HTTP.
-   f) Renvoie la réponse JSON : { id: "scan_abc123" }.
-
-6. Le frontend redirige immédiatement vers /scans/scan_abc123.
-   └── ScanDetailPage.tsx s'ouvre et interroge l'API GET /api/v1/scans/scan_abc123
-       toutes les 2,5 secondes.
-
-7. Le moteur de scan (backend/services/scanner.ts & real-engine.ts) :
-   - Étape 15 % : Résolution DNS et vérification réseau.
-   - Étape 35 % : Inspection cryptographique du certificat SSL/TLS.
-   - Étape 65 % : Analyse des en-têtes HTTP de sécurité.
-   - Étape 85 % : Recherche de divulgation de technologies.
-   - Étape 100 % : Calcul du score /100 et génération des fiches de correctifs.
-
-8. ScanDetailPage détecte progress = 100% :
-   └── Affiche instantanément le cadran du score (ex: 82/100), les compteurs de failles
-       critiques/moyennes, et les boutons d'export PDF, HTML et JSON !
+1. L'utilisateur ouvre /scans/new dans frontend/src/pages/NewScanPage.tsx.
+2. Le client appelle api.targets.list() -> GET /api/v1/targets.
+3. L'utilisateur choisit une cible autorisée et un profil (fast / standard / deep).
+4. Le client appelle api.scans.create() -> POST /api/v1/scans.
+5. backend/src/controllers/scans.controller.js :
+   - Vérifie l'autorisation de la cible et le solde (free_scans ou credits).
+   - Enregistre le débit dans transactions.
+   - Crée le scan (status: 'running', progress: 5).
+   - Lance runScanWorker(newScan.id) sans bloquer la réponse HTTP 201.
+6. Le frontend redirige vers /scans/:id (ScanDetailPage.tsx) qui poll GET /api/v1/scans/:id.
+7. real-engine.ts exécute DNS -> SSL/TLS -> Headers HTTP -> Sous-domaines -> Score.
+8. Dès progress === 100, ScanDetailPage affiche le score, les failles et les exports HTML/JSON/PDF.
 ```
 
 ---
 
-## 10. Guide d'Évolution Pratique
+## 10. Tests Automatisés & Collection API
 
-### A. Activer les Paiements Réels Mobile Money (Wave / Orange Money / CinetPay)
-1. Ouvrez `backend/routes/credits.routes.ts`.
-2. Ajoutez la route `POST /api/v1/credits/checkout` :
-   - Reçoit le `pack_id`, le `phone` et l'opérateur (`Wave`, `Orange`, `MTN`, `Moov`).
-   - Appelle l'API de votre passerelle de paiement (ex. CinetPay ou Wave Business API).
-   - Renvoie l'URL de paiement ou initie le push USSD sur le téléphone du client.
-3. Ajoutez la route webhook `POST /api/v1/credits/webhook` pour créditer automatiquement le compte de l'utilisateur dès confirmation de la transaction.
-
-### B. Ajouter de Nouveaux Contrôles de Sécurité au Moteur de Scan
-- Ouvrez `backend/services/real-engine.ts`.
-- Vous pouvez enrichir la détection (ex: recherche de ports ouverts avec `net.connect`, détection de sous-domaines via DNS brute-force, ou vérification des versions de CMS).
-- Ajoutez simplement les vulnérabilités trouvées au tableau `findings` avec leur note CVSS.
+- **Suite de tests unitaires (`tests/`)** : Exécutez `npm test` pour tester l'ensemble des contrôleurs (`auth`, `targets`, `scans`, `credits`, `misc`) via un serveur HTTP éphémère en moins de 0,3 seconde.
+- **Collection Postman / Bruno (`kortex_defender_api_collection.json`)** : Importez ce fichier dans Postman, Bruno ou Insomnia pour tester manuellement toutes les routes `/api/v1/*`.
 
 ---
 
@@ -625,36 +328,10 @@ Vous disposez maintenant d'un environnement **Kortex Defender Full-Stack complet
 
 | Commande | Rôle |
 |---|---|
-| `npm run dev` | Démarre l'environnement Full-Stack (Backend Express + Frontend Vite HMR) sur le port 3000. |
-| `npm run dev:back` | Démarre uniquement le Backend Express API sur le port 5000 (`http://localhost:5000`). |
-| `npm run dev:front` | Démarre uniquement le Frontend React Vite sur le port 5173 (`http://localhost:5173`) avec proxy auto vers le port 5000. |
-| `npm test` | Exécute la suite complète de tests unitaires automatisés dans `tests/` (Auth, Cibles, Scans, Crédits, Misc). |
-| `npm run build` | Compile le frontend React et Tailwind dans le dossier de production `/dist`. |
-| `npm run lint` | Lance la vérification stricte des types TypeScript sur tout le projet (`tsc --noEmit`). |
-| `npm start` | Démarre le serveur autonome de production Node.js. |
-
-### 📬 Collection de Requêtes d'API (Postman, Insomnia, Bruno)
-Le fichier `kortex_defender_api_collection.json` à la racine contient l'ensemble des requêtes prêtes à être importées dans Postman, Insomnia ou Bruno avec exemples de payload pour chaque route `/api/v1/*`.
-
-### 🧪 Suite de Tests Unitaires (`tests/`)
-Le dossier `tests/` contient les tests automatisés :
-- `tests/auth.test.ts` : Inscription, doublons, login, mauvais identifiants, OTP WhatsApp, déconnexion.
-- `tests/targets.test.ts` : CRUD des cibles et bascule d'attestation d'autorisation légale.
-- `tests/scans.test.ts` : Cycle de vie du scan, décompte de crédits, exports HTML et JSON, suppression.
-- `tests/credits.test.ts` : Solde, utilisation des coupons de recharge, historique des transactions.
-- `tests/misc.test.ts` : Profil utilisateur `/me`, notifications et programme d'affiliation Mobile Money.
-- `tests/run-tests.ts` : Lanceur central des tests avec bilan chronométré.
-
----
-
-## Conclusion & Synthèse
-
-Le projet Kortex Defender est désormais structuré selon les **meilleures pratiques professionnelles de l'ingénierie logicielle** :
-
-1. **Deux dossiers distincts et étanches :** `/frontend` (React 19 SPA) et `/backend` (Express API & Moteur d'audit).
-2. **Une normalisation complète des routes sous `/api/v1/`**.
-3. **Une architecture découplée en couches :** chaque fichier a une mission claire et unique.
-4. **Une documentation complète :**
-   - **`GUIDE_PROJET.md` (ce document)** : Comprendre l'architecture et savoir lancer la base de données.
-   - **`ISSUES.md`** : Suivre les 16 tickets de déploiement pour la production en Afrique.
-   - **`README.md`** : Guide technique condensé du projet.
+| `npm run dev` | Lance Frontend + Backend ensemble sur `http://localhost:3000`. |
+| `npm run dev:back` | Lance uniquement le Backend Express sur `http://localhost:5000`. |
+| `npm run dev:front` | Lance uniquement le Frontend Vite sur `http://localhost:5173` (proxy `/api` -> `5000`). |
+| `npm test` | Exécute toutes les suites de tests unitaires dans `tests/`. |
+| `npm run lint` | Vérifie le typage TypeScript global (`tsc --noEmit`). |
+| `npm run build` | Compile le frontend dans `/dist`. |
+| `npm start` | Démarre le serveur en mode production. |

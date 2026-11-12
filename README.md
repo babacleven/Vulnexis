@@ -5,369 +5,202 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
 [![API Standard](https://img.shields.io/badge/API-REST%20%2Fapi%2Fv1%2F-emerald.svg)](#-documentation-de-lapi-apiv1)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](#)
 
-> **Kortex Defender** est une plateforme SaaS de cybersécurité conçue pour permettre aux entreprises, développeurs et organisations d'auditer la sécurité de leurs sites web et API, d'identifier les vulnérabilités avant qu'elles ne soient exploitées, et d'obtenir des correctifs clairs et actionnables.
+> **Kortex Defender** est une plateforme SaaS de cybersécurité conçue pour permettre aux entreprises, développeurs et organisations d'auditer la sécurité de leurs sites web et API, d'identifier les vulnérabilités avant qu'elles ne soient exploitées et d'obtenir des correctifs actionnables.
 
-La plateforme est nativement adaptée aux réalités économiques et techniques de la Côte d'Ivoire et de la zone UEMOA (tarification en Francs CFA, validation Mobile Money, vérification WhatsApp OTP).
+La plateforme est nativement adaptée au contexte UEMOA / Côte d'Ivoire (tarification en Francs CFA, validation Mobile Money Wave / Orange Money, vérification WhatsApp OTP).
 
 ---
 
 ## Sommaire
 
-1. [Fonctionnalités Principales](#-fonctionnalités-principales)
-2. [Profils d'Audit & Décompte](#-profils-daudit--décompte)
-3. [Architecture Technique du Projet](#-architecture-technique)
+1. [Démarrage Express (3 étapes)](#-démarrage-express-3-étapes)
+2. [Fonctionnalités & Profils d'Audit](#-fonctionnalités--profils-daudit)
+3. [Architecture du Projet](#-architecture-du-projet)
 4. [Moteurs de Scan Réels (`real-engine.ts` & `scanner.ts`)](#-moteurs-de-scan-réels-real-enginets--scannerts)
-5. [Documentation de l'API (`/api/v1/`)](#-documentation-de-lapi-apiv1)
-6. [Tests Unitaires & Collection Postman](#-tests-unitaires-automatisés--collection-dapi)
-7. [Démarrage 100% Local (Sans Docker, Sans Prisma)](#-démarrage-100-local-sans-docker-sans-prisma)
-8. [Brancher votre PostgreSQL Local](#-brancher-votre-postgresql-local-installé-sur-votre-pc)
-9. [Variables d'Environnement](#-variables-denvironnement)
-10. [Éthique & Conformité Juridique](#-éthique--conformité-juridique)
-11. [Feuille de Route & Documentation Approfondie](#-feuille-de-route--documentation-approfondie)
+5. [Modes de Lancement en Local (Unifié ou Séparé)](#-modes-de-lancement-en-local-sans-docker-sans-prisma)
+6. [Connexion à votre PostgreSQL Local (`Base_de_donnees.sql`)](#-connexion-à-votre-postgresql-local-installé-sur-votre-pc)
+7. [Documentation de l'API (`/api/v1/`)](#-documentation-de-lapi-apiv1)
+8. [Tests Unitaires & Collection Postman](#-tests-unitaires-automatisés--collection-dapi)
+9. [Dépannage Rapide (FAQ)](#-dépannage-rapide)
+10. [Documentation Complémentaire](#-documentation-complémentaire)
 
 ---
 
-## 🚀 Fonctionnalités Principales
+## ⚡ Démarrage Express (3 étapes)
 
-### 1. Gestion des Applications & Périmètre
-- **Déclaration des cibles** : Prise en charge des sites web vitrines, applications web modernes, API REST et endpoints GraphQL.
-- **Attestation de propriété obligatoire** : Signature horodatée certifiant que l'utilisateur est propriétaire de la cible ou dispose d'une autorisation écrite formelle.
-- **Historique & Métriques** : Suivi du score de sécurité dans le temps et comptage des audits réalisés.
+```bash
+# 1. Installer les dépendances
+npm install
 
-### 2. Moteur d'Audit Réel Modulaire
-- **Inspection SSL/TLS** : Validité du certificat, autorité émettrice, détection de l'expiration imminente, contrôle des protocoles (TLS 1.2, TLS 1.3) et suites de chiffrement.
-- **Audit des en-têtes HTTP de sécurité** : Vérification de la présence et de la configuration de `Content-Security-Policy` (CSP), `Strict-Transport-Security` (HSTS), `X-Frame-Options` (anti-clickjacking), `X-Content-Type-Options`, `Referrer-Policy`, et `Permissions-Policy`.
-- **Détection des fuites d'informations** : Identification des signatures logicielles et versions exposées (`Server`, `X-Powered-By`).
-- **Cartographie des sous-domaines** : Découverte passive et active des sous-domaines (`api`, `admin`, `staging`, `portal`...).
-- **Corrélation CVE** : Rapprochement des technologies identifiées avec les catalogues de vulnérabilités connues (NVD/OSV).
+# 2. (Optionnel) Configurer PostgreSQL local
+cp .env.example .env
+# -> Modifiez DATABASE_URL dans .env avec votre mot de passe PostgreSQL
 
-### 3. Rapports & Exportations
-- **Score synthétique sur 100** avec code couleur de criticité (Critique, Élevée, Moyenne, Faible, Info).
-- **Fiches de vulnérabilité didactiques** : Titre, catégorie, score CVSS, explication de l'impact, élément de preuve détecté (proof) et proposition de correctif de code adapté.
-- **Export multi-formats** :
-  - **HTML autonome** prêt à être archivé ou partagé en interne.
-  - **JSON machine-readable** pour l'intégration dans les pipelines DevOps / CI/CD.
-  - **Version imprimable** optimisée pour l'export en document PDF format A4.
-
-### 4. Modèle Économique & Monétisation UEMOA
-- **Dotation de bienvenue** : 3 scans de découverte gratuits offerts à chaque nouveau compte.
-- **Packs de crédits en FCFA** :
-  - *Essentiel* : 1 000 FCFA (10 crédits).
-  - *Starter* : 2 000 FCFA (20 crédits).
-  - *Premium* : 5 000 FCFA / mois (60 crédits + Agent Kortex inclus).
-  - *Premium Plus* : Sur devis personnalisé pour grands comptes.
-- **Codes coupons / Bons de rechargement** : Système de codes cadeaux et de cartes prépayées (`STARTER`, `PREMIUM`).
-- **Programme d'affiliation / Parrainage** : Réduction de -30 % pour le filleul, commission de 20 % pour le parrain avec versement par Mobile Money (Wave, Orange Money, MTN MoMo, Moov Money).
+# 3. Lancer l'application complète
+npm run dev
+```
+👉 Ouvrez **`http://localhost:3000`** — Compte de test inclus : `babaaristote6@gmail.com` / `Cl2even2026`.
 
 ---
 
-## 🎯 Profils d'Audit & Décompte
+## 🚀 Fonctionnalités & Profils d'Audit
 
-| Profil | Coût | Durée estimée | Périmètre d'analyse |
-|---|---|---|---|
-| **Rapide (`fast`)** | 1 crédit *(ou 1 scan gratuit)* | ~1 à 2 min | En-têtes HTTP de sécurité, certificat SSL/TLS, détection basique des technologies. |
-| **Standard (`standard`)** | 2 crédits *(ou 1 scan gratuit)* | ~3 à 5 min | Reconnaissance complète, failles de configuration, CVE connues, fuites de secrets dans le JavaScript, cartographie des sous-domaines. |
-| **Approfondi (`deep`)** | 4 crédits | ~10 à 15 min | Cartographie exhaustive, analyse active des endpoints d'API, tests d'exposition de fichiers sensibles (`.env`, `.git`), audit de session et rapport complet. |
+### Capacités clés
+- **Gestion des Cibles (`web`, `api`, `graphql`)** avec attestation légale d'autorisation horodatée.
+- **Moteur d'Audit Réel** : DNS (`A`, `AAAA`, `MX`, `SPF`, `DMARC`), handshake **SSL/TLS**, en-têtes HTTP (`CSP`, `HSTS`, `X-Frame-Options`, `X-Content-Type-Options`, `Permissions-Policy`), divulgation de bannières serveur et cartographie de sous-domaines.
+- **Rapports & Exports** : Score synthétique `/100`, sévérités CVSS, remédiations concrètes, téléchargement **HTML autonome**, **JSON** ou impression **PDF A4**.
+- **Monétisation UEMOA** : 3 scans gratuits de bienvenue, packs en FCFA, coupons de recharge (`STARTER`, `PREMIUM`) et affiliation Mobile Money.
+
+### Barème des profils
+| Profil | Coût | Périmètre analysé |
+|---|---|---|
+| **Rapide (`fast`)** | 1 crédit *(ou 1 scan gratuit)* | Certificat SSL/TLS, en-têtes HTTP critiques, détection basique des technologies. |
+| **Standard (`standard`)** | 2 crédits *(ou 1 scan gratuit)* | DNS/SPF/DMARC, TLS complet, tous les en-têtes de sécurité, sous-domaines passifs. |
+| **Approfondi (`deep`)** | 4 crédits | Tout le profil Standard + audit de sécurité des cookies/sessions et chemins critiques. |
 
 ---
 
-## 🏗 Architecture Technique
-
-L'application est découpée en deux espaces de travail distincts et autonomes :
+## 🏗 Architecture du Projet
 
 ```text
+├── server.ts                            # Orchestrateur unifié (Vite + Express, port 3000)
+├── index.html                           # Entrée HTML racine
+├── vite.config.ts                       # Config Vite + proxy /api -> port 5000
+├── .env.example                         # Modèle de configuration environnement
+├── kortex_defender_api_collection.json  # Collection Postman / Bruno / Insomnia
+│
 ├── backend/
-│   ├── src/
-│   │   ├── config/              # Configuration (env.js, cors.js)
-│   │   ├── controllers/         # Contrôleurs API REST (auth, targets, scans, credits, misc)
-│   │   ├── database/
-│   │   │   ├── Base_de_donnees.sql  # Schéma SQL PostgreSQL & Seed de test
-│   │   │   ├── connection.js    # Pool PostgreSQL natif (pg) avec fallback automatique
-│   │   │   └── db.js            # Store de données autonome local
-│   │   ├── middlewares/         # Middlewares (auth, cors, error)
-│   │   ├── routes/              # Définition des routes /api/v1/*
-│   │   ├── services/            # Moteurs d'audit réels
-│   │   │   ├── real-engine.ts   # Moteur réseau réel (DNS, TLS, Headers, CVSS)
-│   │   │   └── scanner.ts       # Worker d'exécution asynchrone des scans
-│   │   ├── utils/               # Utilitaires et passerelles de compatibilité
-│   │   │   ├── helpers.js
-│   │   │   ├── real-engine.ts
-│   │   │   └── scanner.ts
-│   │   ├── types.ts             # Typages TypeScript backend
-│   │   ├── app.js               # Factory Express
-│   │   └── server.js            # Serveur autonome Backend (Port 5000)
-│   ├── package-lock.json
-│   └── package.json
+│   ├── package.json
+│   └── src/
+│       ├── app.js                       # Factory Express & montage des routes /api/v1/*
+│       ├── server.js                    # Serveur Backend standalone (port 5000)
+│       ├── types.ts                     # Modèles TypeScript backend
+│       ├── config/
+│       │   ├── env.js                   # Chargement auto du .env (racine ou backend/)
+│       │   └── cors.js                  # Configuration CORS
+│       ├── database/
+│       │   ├── Base_de_donnees.sql      # Script SQL PostgreSQL complet (DDL + Seed)
+│       │   ├── connection.js            # Pool PostgreSQL (pg) avec fallback automatique
+│       │   └── db.js                    # Store autonome local en mémoire
+│       ├── middlewares/
+│       │   ├── auth.middleware.js       # Session cookie & protection
+│       │   ├── cors.middleware.js       # Headers CORS
+│       │   └── error.middleware.js      # Formatage centralisé des erreurs
+│       ├── routes/                      # Routeurs REST (/api/v1/*)
+│       ├── controllers/                 # Logique métier par domaine
+│       ├── services/
+│       │   ├── real-engine.ts           # Moteur d'audit réseau réel
+│       │   └── scanner.ts               # Worker asynchrone de scan
+│       └── utils/                       # Helpers & passerelles de ré-export
 │
 ├── frontend/
-│   ├── public/
-│   │   ├── favicon.svg          # Favicon SVG officiel Kortex Defender
-│   │   └── icons.svg            # Sprite d'icônes SVG
-│   ├── src/
-│   │   ├── assets/
-│   │   │   ├── hero.png         # Capture héro / mockup
-│   │   │   ├── react.svg
-│   │   │   └── vite.svg
-│   │   ├── components/          # Composants UI (AppLayout, Icons)
-│   │   ├── lib/
-│   │   │   └── types.ts         # Modèles de données TypeScript
-│   │   ├── pages/               # Les 13 vues du produit (Dashboard, Scans...)
-│   │   ├── services/
-│   │   │   └── api.ts           # Client API typé (/api/v1/*)
-│   │   ├── App.css              # Styles globaux applicatifs
-│   │   ├── App.tsx              # Routeur et gestion de session
-│   │   ├── index.css            # Design System Halcyon Mesh (Tailwind CSS v4)
-│   │   └── main.tsx             # Point de montage React 19
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package-lock.json
 │   ├── package.json
-│   ├── README.md
-│   ├── tsconfig.app.json
-│   ├── tsconfig.json
-│   ├── tsconfig.node.json
-│   └── vite.config.ts
+│   ├── vite.config.ts                   # Config Vite autonome (port 5173)
+│   ├── index.html
+│   ├── public/                          # favicon.svg, icons.svg
+│   └── src/
+│       ├── main.tsx                     # Montage React 19
+│       ├── App.tsx                      # Routeur SPA
+│       ├── App.css / index.css          # Design System Halcyon Mesh + Tailwind CSS v4
+│       ├── assets/                      # hero.png, react.svg, vite.svg
+│       ├── lib/types.ts                 # Contrats TypeScript client
+│       ├── services/api.ts              # Client API typé (/api/v1/*)
+│       ├── context/AuthContext.tsx      # Session & solde de crédits
+│       ├── components/                  # AppLayout, Icons
+│       └── pages/                       # Les 13 écrans du produit
 │
-├── tests/                       # Suite de tests unitaires automatisés
-│   ├── auth.test.ts
-│   ├── targets.test.ts
-│   ├── scans.test.ts
-│   ├── credits.test.ts
-│   ├── misc.test.ts
-│   ├── helpers.ts
-│   └── run-tests.ts             # Lanceur central
-│
-├── kortex_defender_api_collection.json  # Collection Postman / Bruno officielle
-├── .gitignore
-├── package-lock.json
-├── package.json
-└── README.md
+└── tests/                               # Tests unitaires automatisés (npm test)
+    ├── auth.test.ts
+    ├── targets.test.ts
+    ├── scans.test.ts
+    ├── credits.test.ts
+    ├── misc.test.ts
+    ├── helpers.ts
+    └── run-tests.ts
 ```
 
 ---
 
 ## ⚡ Moteurs de Scan Réels (`real-engine.ts` & `scanner.ts`)
 
-Le cœur technique de Kortex Defender est localisé dans `backend/src/services/` :
+1. **`backend/src/services/real-engine.ts`** :
+   - Effectue de vraies sondes réseau Node.js (`node:dns/promises`, `node:tls`, `node:http`, `node:https`).
+   - Applique un blindage **anti-SSRF** bloquant les IP privées (`10.x.x.x`, `192.168.x.x`) et métadonnées cloud (`169.254.169.254`).
+   - Détecte les failles DNS (`SPF`, `DMARC`), certificats proches de l'expiration, protocoles obsolètes (`TLSv1`, `TLSv1.1`), en-têtes HTTP manquants et bannières exposées (`Server`, `X-Powered-By`).
+2. **`backend/src/services/scanner.ts`** :
+   - Lance l'audit en arrière-plan dès la création du scan (`POST /api/v1/scans`), diffuse le journal technique (`log_lines`) en direct et assure un repli gracieux si une cible est injoignable.
 
-### 1. `backend/src/services/real-engine.ts`
-Ce module effectue de **vraies requêtes réseau** sur les applications auditées :
-- **Résolution DNS** : Enregistrements A (IPv4), AAAA (IPv6), MX (serveurs mail), contrôle SPF (`v=spf1`) et DMARC (`v=DMARC1`) pour prévenir l'usurpation d'identité (spoofing).
-- **Protection Anti-SSRF** : Refuse immédiatement les adresses privées (`10.0.0.0/8`, `192.168.0.0/16`) ou les endpoints de métadonnées Cloud (`169.254.169.254`).
-- **Handshake Cryptographique TLS** : Établit une socket TLS directe sur le port 443 pour extraire le certificat, le nom de l'autorité émettrice, la date d'expiration, et alerte si TLS 1.0 ou TLS 1.1 est accepté.
-- **Inspection des En-têtes HTTP** : Contrôle exhaustif de `Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, et `Permissions-Policy`.
-- **Détection des Signatures Serveur** : Identification des bannières `Server` et `X-Powered-By`.
-- **Cartographie des Sous-Domaines** : Découverte passive des sous-domaines (`api`, `admin`, `auth`, `staging`, `mail`, `portal`, `dev`, `cdn`).
-- **Calcul du Score CVSS** : Pondération mathématique du score de sécurité sur 100 avec classification des vulnérabilités (Critique, Élevée, Moyenne, Faible, Info).
+---
 
-### 2. `backend/src/services/scanner.ts`
-Ce service orchestre l'exécution asynchrone des audits :
-- Déclenche `executeRealAudit` en arrière-plan sans bloquer la requête HTTP de l'utilisateur.
-- Alimente en temps réel le journal technique horodaté (`log_lines`) affiché sur le terminal de l'interface.
-- Fournit un repli gracieux automatique en cas de cible inaccessible ou d'erreur réseau pour garantir une expérience utilisateur fluide.
-- Met à jour automatiquement la cible avec la date du dernier audit et son nouveau score.
+## ⚙️ Modes de Lancement en Local (Sans Docker, Sans Prisma)
+
+| Mode | Commande | URL | Usage |
+|---|---|---|---|
+| **Unifié (1 terminal)** | `npm run dev` | `http://localhost:3000` | Backend + Frontend servis ensemble |
+| **Backend seul** | `npm run dev:back` | `http://localhost:5000` | API REST `/api/v1/*` uniquement |
+| **Frontend seul** | `npm run dev:front` | `http://localhost:5173` | Client React avec proxy `/api` vers `5000` |
+
+---
+
+## 🐘 Connexion à votre PostgreSQL Local (Installé sur votre PC)
+
+1. **Créez la base** dans pgAdmin, DBeaver ou `psql` :
+   ```sql
+   CREATE DATABASE kortex_defender;
+   ```
+2. **Exécutez le script unique `backend/src/database/Base_de_donnees.sql`** dans `kortex_defender` (crée les 6 tables, les index et insère votre compte `babaaristote6@gmail.com`).
+3. **Configurez `.env`** à la racine du projet :
+   ```env
+   DATABASE_URL="postgresql://postgres:VOTRE_MOT_DE_PASSE@localhost:5432/kortex_defender"
+   ```
+4. **Démarrez** (`npm run dev` ou `npm run dev:back`). Vous verrez :
+   ```text
+   🐘 [PostgreSQL] Connecté avec succès à votre base locale ! (Heure serveur: ...)
+   ```
+   *(Si `.env` ne contient pas `DATABASE_URL` ou si PostgreSQL est arrêté, l'application bascule automatiquement sur le store autonome `backend/src/database/db.js`).*
 
 ---
 
 ## 📡 Documentation de l'API (`/api/v1/`)
 
-Tous les endpoints métier sont standardisés sous **`/api/v1/`** et sécurisés par session HTTP-only :
-
-### 1. Authentification (`/api/v1/auth/*`)
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/v1/auth/register` | Inscription d'un nouvel utilisateur (attribue 3 scans gratuits). |
-| `POST` | `/api/v1/auth/login` | Connexion avec email et mot de passe. |
-| `POST` | `/api/v1/auth/logout` | Déconnexion et révocation de la session. |
-| `POST` | `/api/v1/auth/send-otp` | Simulation d'envoi d'un code OTP WhatsApp. |
-| `POST` | `/api/v1/auth/verify-otp` | Validation du code OTP à 6 chiffres. |
-
-### 2. Applications & Cibles (`/api/v1/targets/*`)
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/v1/targets` | Liste de toutes les applications de l'utilisateur. |
-| `POST` | `/api/v1/targets` | Déclaration d'une nouvelle cible avec attestation d'autorisation légale. |
-| `GET` | `/api/v1/targets/:id` | Détails d'une application et historique spécifique. |
-| `POST` | `/api/v1/targets/:id/authorize` | Activation / révocation de l'attestation légale de scan. |
-| `DELETE` | `/api/v1/targets/:id` | Suppression définitive d'une cible et de son historique. |
-
-### 3. Moteur de Scans & Rapports (`/api/v1/scans/*`)
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/v1/scans` | Liste des audits avec filtrage possible par statut et cible. |
-| `POST` | `/api/v1/scans` | Lancement d'un scan (`target_id`, profil : `fast`, `standard`, `deep`). |
-| `GET` | `/api/v1/scans/:id` | Progression en temps réel et rapport complet du scan. |
-| `GET` | `/api/v1/scans/:id/download` | Téléchargement du rapport au format HTML ou JSON (`?format=html`). |
-| `DELETE` | `/api/v1/scans/:id` | Suppression définitive d'un rapport de scan. |
-
-### 4. Facturation & Crédits (`/api/v1/credits/*`)
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/v1/credits/me` | Solde actuel de crédits et scans de découverte restants. |
-| `POST` | `/api/v1/credits/redeem` | Activation d'un code de recharge (`STARTER`, `PREMIUM`). |
-| `GET` | `/api/v1/credits/me/transactions` | Historique de toutes les consommations et attributions. |
-
-### 5. Profil, Notifications & Affiliation (`/api/v1/*`)
-| Méthode | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/v1/me` | Informations du profil utilisateur connecté. |
-| `GET` | `/api/v1/notifications/me` | Liste des alertes de sécurité. |
-| `GET` | `/api/v1/notifications/me/unread-count` | Nombre d'alertes non lues. |
-| `POST` | `/api/v1/notifications/read-all` | Marquer toutes les alertes comme lues. |
-| `GET` | `/api/v1/referrals/me` | Statut de la demande d'affiliation. |
-| `POST` | `/api/v1/referrals/apply` | Soumission du dossier de parrainage avec numéro Mobile Money. |
+| Domaine | Endpoints principaux |
+|---|---|
+| **Auth** | `POST /api/v1/auth/register`, `POST /login`, `POST /logout`, `POST /send-otp`, `POST /verify-otp` |
+| **Cibles** | `GET /api/v1/targets`, `POST /`, `GET /:id`, `POST /:id/authorize`, `DELETE /:id` |
+| **Scans** | `GET /api/v1/scans`, `POST /`, `GET /:id`, `GET /:id/download?format=html\|json`, `DELETE /:id` |
+| **Crédits** | `GET /api/v1/credits/me`, `POST /redeem`, `GET /me/transactions` |
+| **Divers** | `GET /api/v1/me`, `GET /notifications/me`, `GET /notifications/me/unread-count`, `POST /notifications/read-all`, `GET /referrals/me`, `POST /referrals/apply` |
 
 ---
 
 ## 🧪 Tests Unitaires Automatisés & Collection d'API
 
-### 1. Lancer la Suite de Tests Unitaires (`tests/`)
-Une suite complète de tests automatisés couvre l'ensemble des routes et règles métier :
-
-```bash
-npm test
-```
-*Temps d'exécution ultra-rapide (~0.26 seconde), sans dépendances lourdes externes (basé sur Node.js natif).*
-
-Organisation des tests dans `tests/` :
-- `tests/auth.test.ts` : Inscription, rejet doublon, connexion, rejet mauvais mot de passe, OTP WhatsApp, déconnexion.
-- `tests/targets.test.ts` : Liste des cibles, création avec validation d'URL, détails, bascule d'autorisation légale, suppression et 404.
-- `tests/scans.test.ts` : Lancement de scan, décompte de scans gratuits / crédits, rejet cible non attestée (400), rejet solde insuffisant (402), consultation temps réel, export du rapport HTML et JSON, suppression.
-- `tests/credits.test.ts` : Consultation du solde, rechargement par code coupon (`STARTER` +20, `PREMIUM` +60), traçabilité comptable dans l'historique des transactions.
-- `tests/misc.test.ts` : Profil `/api/v1/me`, notifications, compteur non lues, marquage read-all, dépôt de dossier d'affiliation Mobile Money (Wave / OM).
-- `tests/run-tests.ts` : Orchestrateur central avec rapport synthétique en console.
+- **Lancer tous les tests unitaires** :
+  ```bash
+  npm test
+  ```
+  Vérifie 5 suites complètes (Auth, Cibles, Scans, Crédits, Profil/Notifications/Affiliation) en ~0,26 seconde.
+- **Collection Postman / Bruno / Insomnia** :
+  Importez **`kortex_defender_api_collection.json`** (variables `baseUrl`, `targetId`, `scanId` déjà configurées).
 
 ---
 
-### 📬 Collection de Test d'API JSON (`kortex_defender_api_collection.json`)
-Un fichier de collection universel au format standard **Postman Collection v2.1.0** est disponible à la racine du projet :
-- **Fichier** : `kortex_defender_api_collection.json`
-- **Compatible avec** : Postman, Insomnia, Bruno, Hoppscotch, VS Code Thunder Client, et cURL.
-- **Variables intégrées** :
-  - `baseUrl` : `http://localhost:5000` (mode backend) ou `http://localhost:3000` (mode unifié).
-  - `targetId` et `scanId` paramétrables automatiquement.
-- **Dossiers pré-configurés** : 100% des routes `/api/v1/*` avec corps de requête JSON prêts à l'envoi et descriptions didactiques.
+## 🛠 Dépannage Rapide
+
+- **Le serveur affiche `aucun DATABASE_URL configuré` alors que `.env` existe :**
+  Vérifiez que le fichier à la racine s'appelle exactement **`.env`** (pas `.env.txt` sous Windows), que la ligne `DATABASE_URL=...` n'est pas commentée avec `#`, puis redémarrez `npm run dev`.
+- **Erreur `EADDRINUSE` sur le port `3000` ou `5000` :**
+  Libérez le port sous Windows PowerShell (`netstat -ano | findstr :3000` puis `taskkill /PID <PID> /F`) ou définissez `PORT=3001` / `BACKEND_PORT=5001`.
+- **Vérifier le typage & le build :**
+  ```bash
+  npm run lint && npm run build
+  ```
 
 ---
 
-## ⚙️ Démarrage 100% Local (Sans Docker, Sans Prisma)
+## 📖 Documentation Complémentaire
 
-> 💡 **Vous n'avez PAS besoin de Docker, de PostgreSQL ni de Prisma pour développer en local !**  
-> Le projet intègre sa propre base de données locale autonome dans `backend/src/database/db.js`. Elle est prête à l'emploi et pré-remplie avec votre compte de test (`babaaristote6@gmail.com`, mot de passe `Cl2even2026`).
-
-### 1. Installation des dépendances
-```bash
-npm install
-```
-
----
-
-### 2. Lancement au choix (3 modes de travail)
-
-#### Mode A : Full-Stack Unifié (Le plus simple, 1 seul terminal)
-Lance l'interface React et l'API Express ensemble sur un port unique :
-```bash
-npm run dev
-```
-👉 Ouvrez votre navigateur sur : **`http://localhost:3000`**
-
----
-
-#### Mode B : Séparé — Lancer uniquement le Backend (Port 5000)
-Dans un premier terminal, lance exclusivement l'API Express :
-```bash
-npm run dev:back
-```
-👉 Serveur API disponible sur : **`http://localhost:5000`**  
-👉 Endpoints canoniques : `http://localhost:5000/api/v1/`
-
----
-
-#### Mode C : Séparé — Lancer uniquement le Frontend (Port 5173)
-Dans un second terminal, lance l'application client Vite :
-```bash
-npm run dev:front
-```
-👉 Application client disponible sur : **`http://localhost:5173`**  
-*(Vite redirige automatiquement toutes les requêtes `/api/*` vers le backend sur `http://localhost:5000` grâce au proxy intégré).*
-
----
-
-## 🐘 Brancher votre PostgreSQL Local (Installé sur votre PC)
-
-Puisque vous avez déjà PostgreSQL installé sur votre machine, vous pouvez vous y connecter directement **sans Docker** :
-
-### Étape 1 : Créer la base de données
-Dans votre outil favori (**pgAdmin**, **DBeaver**, ou dans le terminal `psql`) :
-```sql
-CREATE DATABASE kortex_defender;
-```
-
-### Étape 2 : Créer les tables et insérer les données
-Un script SQL tout-en-un prêt à l'emploi est fourni dans le dossier `backend/src/database/` :
-- Exécutez le script **`backend/src/database/Base_de_donnees.sql`** :
-  - Il crée automatiquement les 6 tables relationnelles (`users`, `targets`, `scans`, `transactions`, `notifications`, `referral_requests`) et les index de performance.
-  - Il insère immédiatement votre compte de test officiel (`babaaristote6@gmail.com` / `Cl2even2026`), vos scans offerts et votre notification de bienvenue.
-
-### Étape 3 : Indiquer votre mot de passe dans `.env`
-Créez un fichier `.env` à la racine du projet avec vos identifiants PostgreSQL locaux :
-```env
-# Remplacez "mot_de_passe" par le mot de passe de votre utilisateur postgres
-DATABASE_URL="postgresql://postgres:mot_de_passe@localhost:5432/kortex_defender"
-```
-
-### Étape 4 : Lancer le projet
-```bash
-npm run dev
-# ou séparé : npm run dev:back
-```
-Au démarrage, la console confirme automatiquement la connexion :
-```text
-🐘 [PostgreSQL] Connecté avec succès à votre base locale ! (Heure serveur: ...)
-```
-
-*(Si vous ne renseignez pas `DATABASE_URL` ou si PostgreSQL est arrêté, le projet bascule automatiquement sur le store autonome `backend/src/database/db.js` sans jamais planter).*
-
----
-
-## 🔐 Variables d'Environnement
-
-Le fichier `.env.example` définit les variables de configuration supportées :
-
-```env
-# URL publique de déploiement de l'application
-APP_URL="http://localhost:3000"
-
-# URL de la base de données PostgreSQL (optionnelle en dev avec store mémoire)
-DATABASE_URL="postgresql://postgres:secret@localhost:5432/kortex_defender"
-
-# Clé API Google Gemini (utilisée pour l'Agent Kortex en production)
-GEMINI_API_KEY=""
-
-# Port d'écoute du serveur unifié (par défaut 3000)
-PORT=3000
-
-# Port d'écoute du serveur backend autonome (par défaut 5000)
-BACKEND_PORT=5000
-```
-
----
-
-## ⚖️ Éthique & Conformité Juridique
-
-L'utilisation de Kortex Defender est encadrée par des garde-fous stricts :
-
-1. **Autorisation Explicite Obligatoire** : Il est formellement interdit de scanner des applications, serveurs ou API sans détenir les droits d'administration ou une autorisation écrite expresse du propriétaire légal.
-2. **Traçabilité des Signatures** : Chaque ajout de cible enregistre un horodatage UTC infalsifiable, l'adresse IP source et le User-Agent de la personne effectuant la demande.
-3. **Protection contre le Déni de Service (DoS)** : Les scans sont conçus pour être non destructifs et appliquent des limites de cadence pour ne pas perturber les serveurs de production.
-4. **Blindage SSRF** : Le moteur refuse systématiquement toute cible pointant vers des réseaux privés locaux (`localhost`, `127.0.0.1`, `10.0.0.0/8`, `192.168.0.0/16`, `169.254.169.254`).
-
----
-
-## 📋 Feuille de Route & Documentation Approfondie
-
-- **[`FEUILLE_DE_ROUTE_PRODUCTION.md`](./FEUILLE_DE_ROUTE_PRODUCTION.md)** : Feuille de route pour le passage futur en production (intégration de vrais paiements Mobile Money Wave / Orange Money, worker queue BullMQ, Bcrypt).
-- **[`GUIDE_PROJET.md`](./GUIDE_PROJET.md)** : Guide technique complet détaillant l'architecture logicielle, le cycle de vie des scans et le fonctionnement de chaque fichier.
-- **[`ISSUES.md`](./ISSUES.md)** : Backlog des 16 tickets prêts à être importés dans votre gestionnaire de projet.
+- **[`GUIDE_PROJET.md`](./GUIDE_PROJET.md)** : Explication détaillée de chaque couche logicielle et du cycle de vie complet d'un scan.
+- **[`FEUILLE_DE_ROUTE_PRODUCTION.md`](./FEUILLE_DE_ROUTE_PRODUCTION.md)** : Guide étape par étape pour brancher les requêtes SQL `pool.query`, l'IA Gemini sur les scans, Bcrypt/JWT et Mobile Money.
+- **[`ISSUES.md`](./ISSUES.md)** : Liste des 16 tickets techniques de mise en production.
