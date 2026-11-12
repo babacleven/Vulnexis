@@ -1,4 +1,4 @@
-import { DBScan, DBFinding } from '../types.ts';
+import type { DBScan, DBFinding } from '../types.ts';
 import { DB } from '../database/db.js';
 import { executeRealAudit } from './real-engine.ts';
 

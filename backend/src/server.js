@@ -1,3 +1,4 @@
+import './config/env.js';
 import { createExpressApp } from './app.js';
 import { testPostgresConnection } from './database/connection.js';
 

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "dev:back": "node backend/src/server.js",
+    "dev:back": "tsx backend/src/server.js",
     "dev:front": "vite --port 5173",
     "build": "vite build",
     "preview": "vite preview",

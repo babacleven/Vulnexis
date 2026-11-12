@@ -1,11 +1,13 @@
+import { config } from '../config/env.js';
 import pg from 'pg';
-import { DB } from './db.js';
 
 const { Pool } = pg;
 
-export const pool = process.env.DATABASE_URL
+const databaseUrl = config.databaseUrl || process.env.DATABASE_URL?.trim();
+
+export const pool = databaseUrl
   ? new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: databaseUrl,
       ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
       max: 10,
       idleTimeoutMillis: 30000,
